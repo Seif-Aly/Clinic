@@ -1,5 +1,7 @@
-﻿using Clinic_Complex_Management_System.Data;
-
+﻿using AutoMapper;
+using Clinic_Complex_Management_System.Data;
+using Clinic_Complex_Management_System.DTOs.User;
+using Clinic_Complex_Management_System1.DTOs.User;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -13,30 +15,36 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _config;
+    private readonly IMapper _mapper;
 
-    public AuthController(AppDbContext context, IConfiguration config)
+    public AuthController(AppDbContext context, IConfiguration config, IMapper mapper)
     {
         _context = context;
         _config = config;
+        _mapper = mapper;
     }
 
-    
     [HttpPost("register")]
-    public IActionResult Register([FromBody] User user)
+    public IActionResult Register([FromBody] CreateUserDto createUserDto)
     {
-        var existingUser = _context.Users.FirstOrDefault(u => u.Username == user.Username);
+        var existingUser = _context.Users.FirstOrDefault(u => u.Username == createUserDto.Username);
         if (existingUser != null)
             return BadRequest("Username already exists.");
 
+        var user = _mapper.Map<User>(createUserDto);
         _context.Users.Add(user);
         _context.SaveChanges();
-        return Ok("User registered successfully.");
+
+        var userDto = _mapper.Map<UserDto>(user);
+        return Ok(userDto);
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] User login)
+    public IActionResult Login([FromBody] LoginDto loginDto)
     {
-        var user = _context.Users.FirstOrDefault(u => u.Username == login.Username && u.Password == login.Password);
+        var user = _context.Users.FirstOrDefault(u =>
+            u.Username == loginDto.Username && u.Password == loginDto.Password);
+
         if (user == null)
             return Unauthorized("Invalid credentials.");
 
@@ -44,7 +52,6 @@ public class AuthController : ControllerBase
         return Ok(new { Token = token });
     }
 
-    
     private string GenerateJwtToken(User user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

@@ -1,5 +1,6 @@
-﻿using Clinic_Complex_Management_System.Data;
-
+﻿using AutoMapper;
+using Clinic_Complex_Management_System.Data;
+using Clinic_Complex_Management_System.DTOs.Clinic;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,56 +12,76 @@ namespace Clinic_Complex_Management_System.Controllers
     public class ClinicsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public ClinicsController(AppDbContext context)
+        public ClinicsController(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
+        // GET: api/Clinics
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Clinic>>> GetClinics()
+        public async Task<ActionResult<IEnumerable<ClinicDto>>> GetClinics()
         {
-            return await _context.Clinics.Include(c => c.Hospital).ToListAsync();
+            var clinics = await _context.Clinics.Include(c => c.Hospital).ToListAsync();
+            var clinicDtos = _mapper.Map<List<ClinicDto>>(clinics);
+            return Ok(clinicDtos);
         }
 
+        // GET: api/Clinics/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Clinic>> GetClinic(int id)
+        public async Task<ActionResult<ClinicDto>> GetClinic(int id)
         {
-            var clinic = await _context.Clinics.Include(c => c.Hospital).FirstOrDefaultAsync(c => c.Id == id);
+            var clinic = await _context.Clinics
+                .Include(c => c.Hospital)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
             if (clinic == null)
                 return NotFound();
 
-            return clinic;
+            var clinicDto = _mapper.Map<ClinicDto>(clinic);
+            return Ok(clinicDto);
         }
 
+        // PUT: api/Clinics/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutClinic(int id, Clinic clinic)
+        public async Task<IActionResult> PutClinic(int id, UpdateClinicDto updateDto)
         {
-            if (id != clinic.Id)
+            if (id != updateDto.Id)
                 return BadRequest();
 
-            _context.Entry(clinic).State = EntityState.Modified;
+            var clinic = await _context.Clinics.FindAsync(id);
+            if (clinic == null)
+                return NotFound();
 
-            try { await _context.SaveChangesAsync(); }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ClinicExists(id)) return NotFound();
-                else throw;
-            }
+            var hospitalExists = await _context.Hospitals.AnyAsync(h => h.Id == updateDto.HospitalId);
+            if (!hospitalExists)
+                return BadRequest("hospital is not exist");
+
+            _mapper.Map(updateDto, clinic);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
+        // POST: api/Clinics
         [HttpPost]
-        public async Task<ActionResult<Clinic>> PostClinic(Clinic clinic)
+        public async Task<ActionResult<ClinicDto>> PostClinic(CreateClinicDto createDto)
         {
+            var hospitalExists = await _context.Hospitals.AnyAsync(h => h.Id == createDto.HospitalId);
+            if (!hospitalExists)
+                return BadRequest("hospital is not exist");
+
+            var clinic = _mapper.Map<Clinic>(createDto);
             _context.Clinics.Add(clinic);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetClinic", new { id = clinic.Id }, clinic);
+            var clinicDto = _mapper.Map<ClinicDto>(clinic);
+            return CreatedAtAction(nameof(GetClinic), new { id = clinic.Id }, clinicDto);
         }
 
+        // DELETE: api/Clinics/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteClinic(int id)
         {

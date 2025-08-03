@@ -1,5 +1,6 @@
-﻿using Clinic_Complex_Management_System.Data;
-
+﻿using AutoMapper;
+using Clinic_Complex_Management_System.Data;
+using Clinic_Complex_Management_System.DTOs.PrescriptionItem;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,40 +12,57 @@ namespace Clinic_Complex_Management_System.Controllers
     public class PrescriptionItemsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public PrescriptionItemsController(AppDbContext context)
+        public PrescriptionItemsController(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PrescriptionItem>>> GetPrescriptionItems()
+        public async Task<ActionResult<IEnumerable<PrescriptionItemDto>>> GetPrescriptionItems()
         {
-            return await _context.PrescriptionItems.Include(p => p.Prescription).ToListAsync();
+            var items = await _context.PrescriptionItems.Include(p => p.Prescription).ToListAsync();
+            return Ok(_mapper.Map<IEnumerable<PrescriptionItemDto>>(items));
         }
 
-       
         [HttpGet("{id}")]
-        public async Task<ActionResult<PrescriptionItem>> GetPrescriptionItem(int id)
+        public async Task<ActionResult<PrescriptionItemDto>> GetPrescriptionItem(int id)
         {
-            var prescriptionItem = await _context.PrescriptionItems.Include(p => p.Prescription)
+            var item = await _context.PrescriptionItems
+                .Include(p => p.Prescription)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (prescriptionItem == null)
+            if (item == null)
                 return NotFound();
 
-            return prescriptionItem;
+            return Ok(_mapper.Map<PrescriptionItemDto>(item));
         }
 
-        
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPrescriptionItem(int id, PrescriptionItem prescriptionItem)
+        [HttpPost]
+        public async Task<ActionResult<PrescriptionItemDto>> PostPrescriptionItem(CreatePrescriptionItemDto dto)
         {
-            if (id != prescriptionItem.Id)
+            var item = _mapper.Map<PrescriptionItem>(dto);
+
+            _context.PrescriptionItems.Add(item);
+            await _context.SaveChangesAsync();
+
+            var result = _mapper.Map<PrescriptionItemDto>(item);
+            return CreatedAtAction(nameof(GetPrescriptionItem), new { id = item.Id }, result);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutPrescriptionItem(int id, UpdatePrescriptionItemDto dto)
+        {
+            if (id != dto.Id)
                 return BadRequest();
 
-            _context.Entry(prescriptionItem).State = EntityState.Modified;
+            var item = await _context.PrescriptionItems.FindAsync(id);
+            if (item == null)
+                return NotFound();
+
+            _mapper.Map(dto, item);
 
             try
             {
@@ -61,25 +79,14 @@ namespace Clinic_Complex_Management_System.Controllers
             return NoContent();
         }
 
-        
-        [HttpPost]
-        public async Task<ActionResult<PrescriptionItem>> PostPrescriptionItem(PrescriptionItem prescriptionItem)
-        {
-            _context.PrescriptionItems.Add(prescriptionItem);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetPrescriptionItem), new { id = prescriptionItem.Id }, prescriptionItem);
-        }
-
-        
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePrescriptionItem(int id)
         {
-            var prescriptionItem = await _context.PrescriptionItems.FindAsync(id);
-            if (prescriptionItem == null)
+            var item = await _context.PrescriptionItems.FindAsync(id);
+            if (item == null)
                 return NotFound();
 
-            _context.PrescriptionItems.Remove(prescriptionItem);
+            _context.PrescriptionItems.Remove(item);
             await _context.SaveChangesAsync();
 
             return NoContent();

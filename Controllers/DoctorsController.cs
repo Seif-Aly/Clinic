@@ -1,8 +1,11 @@
-﻿using Clinic_Complex_Management_System.Data;
-
+﻿using AutoMapper;
+using Clinic_Complex_Management_System.Data;
+using Clinic_Complex_Management_System1.DTOs.Doctor;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+
+
 
 namespace Clinic_Complex_Management_System.Controllers
 {
@@ -11,36 +14,48 @@ namespace Clinic_Complex_Management_System.Controllers
     public class DoctorsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public DoctorsController(AppDbContext context)
+        public DoctorsController(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
+        // GET: api/Doctors
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Doctor>>> GetDoctors()
+        public async Task<ActionResult<IEnumerable<DoctorDto>>> GetDoctors()
         {
-            return await _context.Doctors.Include(d => d.Clinic).ToListAsync();
+            var doctors = await _context.Doctors.Include(d => d.Clinic).ToListAsync();
+            var doctorDtos = _mapper.Map<List<DoctorDto>>(doctors);
+            return Ok(doctorDtos);
         }
 
+        // GET: api/Doctors/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Doctor>> GetDoctor(int id)
+        public async Task<ActionResult<DoctorDto>> GetDoctor(int id)
         {
             var doctor = await _context.Doctors.Include(d => d.Clinic).FirstOrDefaultAsync(d => d.Id == id);
 
             if (doctor == null)
                 return NotFound();
 
-            return doctor;
+            var doctorDto = _mapper.Map<DoctorDto>(doctor);
+            return Ok(doctorDto);
         }
 
+        // PUT: api/Doctors/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutDoctor(int id, Doctor doctor)
+        public async Task<IActionResult> PutDoctor(int id, UpdateDoctorDto updateDto)
         {
-            if (id != doctor.Id)
+            if (id != updateDto.Id)
                 return BadRequest();
 
-            _context.Entry(doctor).State = EntityState.Modified;
+            var doctor = await _context.Doctors.FindAsync(id);
+            if (doctor == null)
+                return NotFound();
+
+            _mapper.Map(updateDto, doctor);
 
             try { await _context.SaveChangesAsync(); }
             catch (DbUpdateConcurrencyException)
@@ -52,15 +67,20 @@ namespace Clinic_Complex_Management_System.Controllers
             return NoContent();
         }
 
+        // POST: api/Doctors
         [HttpPost]
-        public async Task<ActionResult<Doctor>> PostDoctor(Doctor doctor)
+        public async Task<ActionResult<DoctorDto>> PostDoctor(CreateDoctorDto createDto)
         {
+            var doctor = _mapper.Map<Doctor>(createDto);
             _context.Doctors.Add(doctor);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetDoctor", new { id = doctor.Id }, doctor);
+            var doctorDto = _mapper.Map<DoctorDto>(doctor);
+
+            return CreatedAtAction(nameof(GetDoctor), new { id = doctor.Id }, doctorDto);
         }
 
+        // DELETE: api/Doctors/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDoctor(int id)
         {

@@ -1,5 +1,6 @@
-﻿using Clinic_Complex_Management_System.Data;
-using Clinic_Complex_Management_System1.ViewModels;
+﻿using AutoMapper;
+using Clinic_Complex_Management_System.Data;
+using Clinic_Complex_Management_System.DTOs.Prescription;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,27 +12,27 @@ namespace Clinic_Complex_Management_System.Controllers
     public class PrescriptionsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public PrescriptionsController(AppDbContext context)
+        public PrescriptionsController(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        
         [HttpGet("all")]
         public async Task<IActionResult> GetAllPrescriptions()
         {
             var prescriptions = await _context.Prescriptions
                 .Include(p => p.PrescriptionItems)
                 .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Doctor)
-                .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Patient)
+                .Include(p => p.Doctor)
+                .Include(p => p.Patient)
                 .ToListAsync();
 
-            return Ok(prescriptions);
+            var result = _mapper.Map<List<PrescriptionDto>>(prescriptions);
+            return Ok(result);
         }
-
 
         [HttpGet("details/{id}")]
         public async Task<IActionResult> GetPrescriptionDetails(int id)
@@ -39,50 +40,30 @@ namespace Clinic_Complex_Management_System.Controllers
             var prescription = await _context.Prescriptions
                 .Include(p => p.PrescriptionItems)
                 .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Doctor)
-                .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Patient)
+                .Include(p => p.Doctor)
+                .Include(p => p.Patient)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (prescription == null)
                 return NotFound();
 
-            return Ok(prescription);
+            var result = _mapper.Map<PrescriptionDto>(prescription);
+            return Ok(result);
         }
 
-        
-        [HttpPost("with-items")]
-        public async Task<IActionResult> CreatePrescriptionWithItems([FromBody] PrescriptionWithItemsVM model)
+        [HttpPost]
+        public async Task<IActionResult> CreatePrescription([FromBody] CreatePrescriptionDto dto)
         {
-            var appointment = await _context.Appointments.FindAsync(model.AppointmentId);
-            if (appointment == null)
-                return BadRequest("Invalid Appointment");
-
-            var prescription = new Prescription
-            {
-                Diagnosis = model.Diagnosis,
-                Notes = model.Notes,
-                DateIssued = model.DateIssued,
-                AppointmentId = model.AppointmentId,
-                DoctorId = model.DoctorId,
-                PatientId = model.PatientId,
-                PrescriptionItems = model.Items.Select(i => new PrescriptionItem
-                {
-                    MedicineName = i.MedicationName,
-                    Dosage = i.Dosage,
-                    Instructions = i.Instructions
-                }).ToList()
-            };
-
+            var prescription = _mapper.Map<Prescription>(dto);
             _context.Prescriptions.Add(prescription);
             await _context.SaveChangesAsync();
 
-            return Ok(prescription);
+            var result = _mapper.Map<PrescriptionDto>(prescription);
+            return CreatedAtAction(nameof(GetPrescriptionDetails), new { id = result.Id }, result);
         }
 
-        
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePrescription(int id, [FromBody] PrescriptionWithItemsVM model)
+        public async Task<IActionResult> UpdatePrescription(int id, [FromBody] UpdatePrescriptionDto dto)
         {
             var prescription = await _context.Prescriptions
                 .Include(p => p.PrescriptionItems)
@@ -91,26 +72,15 @@ namespace Clinic_Complex_Management_System.Controllers
             if (prescription == null)
                 return NotFound();
 
-            prescription.Diagnosis = model.Diagnosis;
-            prescription.Notes = model.Notes;
-            prescription.DateIssued = model.DateIssued;
-            prescription.AppointmentId = model.AppointmentId;
+            _mapper.Map(dto, prescription);
 
             _context.PrescriptionItems.RemoveRange(prescription.PrescriptionItems);
-
-            prescription.PrescriptionItems = model.Items.Select(i => new PrescriptionItem
-            {
-                MedicineName = i.MedicationName,
-                Dosage = i.Dosage,
-                Instructions = i.Instructions
-            }).ToList();
+            prescription.PrescriptionItems = _mapper.Map<List<PrescriptionItem>>(dto.Items);
 
             await _context.SaveChangesAsync();
-
-            return Ok(prescription);
+            return NoContent();
         }
 
-       
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePrescriptionWithItems(int id)
         {
@@ -123,28 +93,33 @@ namespace Clinic_Complex_Management_System.Controllers
 
             _context.PrescriptionItems.RemoveRange(prescription.PrescriptionItems);
             _context.Prescriptions.Remove(prescription);
-
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
 
         [HttpGet("by-patient/{patientId}")]
-        public async Task<ActionResult<IEnumerable<Prescription>>> GetPrescriptionsByPatient(int patientId)
+        public async Task<IActionResult> GetPrescriptionsByPatient(int patientId)
         {
-            return await _context.Prescriptions
+            var prescriptions = await _context.Prescriptions
                 .Where(p => p.PatientId == patientId)
                 .Include(p => p.PrescriptionItems)
                 .ToListAsync();
+
+            var result = _mapper.Map<List<PrescriptionDto>>(prescriptions);
+            return Ok(result);
         }
 
-
         [HttpGet("by-doctor/{doctorId}")]
-        public async Task<ActionResult<IEnumerable<Prescription>>> GetPrescriptionsByDoctor(int doctorId)
+        public async Task<IActionResult> GetPrescriptionsByDoctor(int doctorId)
         {
-            return await _context.Prescriptions
+            var prescriptions = await _context.Prescriptions
                 .Where(p => p.DoctorId == doctorId)
                 .Include(p => p.PrescriptionItems)
                 .ToListAsync();
+
+            var result = _mapper.Map<List<PrescriptionDto>>(prescriptions);
+            return Ok(result);
         }
     }
 }
