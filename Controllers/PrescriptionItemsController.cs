@@ -1,5 +1,5 @@
 ﻿using Clinic_Complex_Management_System.Data;
-
+using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,14 +17,50 @@ namespace Clinic_Complex_Management_System.Controllers
             _context = context;
         }
 
-        
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<PrescriptionItem>>> GetPrescriptionItems()
+
+
+        [HttpGet("GetPrescriptionItems")]
+        public async Task<ActionResult<IEnumerable<PrescriptionItem>>> GetPrescriptionItems([FromQuery] PrescriptionITemFilterRequest? prescriptionITemFilterRequest, int page = 1)
         {
-            return await _context.PrescriptionItems.Include(p => p.Prescription).ToListAsync();
+            var prescriptionItem = await _context.PrescriptionItems.Include(p => p.Prescription).ToListAsync();
+            // filter the name medical
+            if (prescriptionITemFilterRequest.MedicalName is not null)
+            {
+                prescriptionItem = prescriptionItem.Where(e => e.MedicineName.Contains(prescriptionITemFilterRequest.MedicalName)).ToList();
+
+            }
+            //filter the presctiptionId
+            if (prescriptionITemFilterRequest.PresctiptionId is not null)
+            {
+                prescriptionItem = prescriptionItem.Where(e => e.PrescriptionId == prescriptionITemFilterRequest.PresctiptionId).ToList();
+            }
+            //pagination
+            if (page < 0)
+            {
+                page = 1;
+            }
+            var Pagination = new
+            {
+                TotallNumberOfPage = Math.Ceiling(prescriptionItem.Count() / 6.0),
+                CurrentPage = page
+            };
+            // data
+            var Returns = new
+            {
+                namemedical = prescriptionITemFilterRequest.MedicalName,
+                prescriptionId = prescriptionITemFilterRequest.PresctiptionId,
+                prescriptionItem = prescriptionItem.Skip((page - 1) * 6).Take(6).ToList()
+            };
+            return Ok(new
+            {
+                pagination = Pagination,
+                returns = Returns
+            });
+
         }
 
-       
+
+
         [HttpGet("{id}")]
         public async Task<ActionResult<PrescriptionItem>> GetPrescriptionItem(int id)
         {

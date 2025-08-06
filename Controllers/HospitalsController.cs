@@ -1,5 +1,5 @@
 ﻿using Clinic_Complex_Management_System.Data;
-
+using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,14 +17,47 @@ namespace Clinic_Complex_Management_System.Controllers
             _context = context;
         }
 
-        
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Hospital>>> GetHospitals()
+
+        [HttpGet("GetHospitals")]
+        public async Task<ActionResult<IEnumerable<Hospital>>> GetHospitals([FromQuery] HospitaliFilterRequest? hospitaliFilterRequest, int page = 1)
         {
-            return await _context.Hospitals.ToListAsync();
+            var hospitals = await _context.Hospitals.Include(e => e.Clinics).ToListAsync();
+            //filter the name hospital
+            if (!string.IsNullOrEmpty(hospitaliFilterRequest.NameHospital))
+            {
+                hospitals = hospitals.Where(e => e.Name.Contains(hospitaliFilterRequest.NameHospital)).ToList();
+            }
+            //filter the Address
+            if (!string.IsNullOrEmpty(hospitaliFilterRequest.Address))
+            {
+                hospitals = hospitals.Where(e => e.Address == hospitaliFilterRequest.Address).ToList();
+            }
+            //pagination
+            if (page < 0)
+            {
+                page = 1;
+            }
+            var Pagination = new
+            {
+                TotallNumberOfPage = Math.Ceiling(hospitals.Count() / 6.0),
+                Currentpage = page
+            };
+            var Returns = new
+            {
+                namehospital = hospitaliFilterRequest.NameHospital,
+                address = hospitaliFilterRequest.Address,
+                hospitals = hospitals.Skip((page - 1) * 6).Take(6).ToList()
+
+            };
+            return Ok(new
+            {
+                pagination = Pagination,
+                returns = Returns
+            });
         }
 
-        
+
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Hospital>> GetHospital(int id)
         {

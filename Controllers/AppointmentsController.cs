@@ -1,9 +1,11 @@
 ﻿using Clinic_Complex_Management_System.Data;
+using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
-namespace Clinic_Complex_Management_System.Controllers
+namespace Clinic_Complex_Management_System1.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -16,17 +18,75 @@ namespace Clinic_Complex_Management_System.Controllers
             _context = context;
         }
 
-        
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Appointment>>> GetAppointments()
+
+        [HttpGet("GetAppointments")]
+        public async Task<ActionResult<IEnumerable<Appointment>>> GetAppointments([FromQuery] AppointmantFilterReqest? appointmantFilterRequest, int page = 1)
         {
-            return await _context.Appointments
-                .Include(a => a.Patient)
-                .Include(a => a.Doctor)
+
+
+            var appointmant = await _context.Appointments
+                .Include(e => e.Doctor)
+                .Include(e => e.Patient)
                 .ToListAsync();
+
+            // Filter the name doctor
+            if (appointmantFilterRequest.NameDoctor is not null)
+            {
+                appointmant = appointmant
+                    .Where(e => e.Doctor.FullName.Contains(appointmantFilterRequest.NameDoctor))
+                    .ToList();
+            }
+            // Filter the Specialization
+            if (appointmantFilterRequest.Specialization is not null)
+            {
+                appointmant = appointmant
+                    .Where(e => e.Doctor.Specialization.Contains(appointmantFilterRequest.Specialization))
+                    .ToList();
+            }
+            // Filter the date time
+            if (appointmantFilterRequest.date != null)
+            {
+                appointmant = appointmant
+                    .Where(e => e.AppointmentDateTime.Date == appointmantFilterRequest.date.Value.Date)
+                    .ToList();
+            }
+            //filter the status
+            if (appointmantFilterRequest.stutas != null)
+            {
+
+                appointmant = appointmant
+                    .Where(e => e.stutas == appointmantFilterRequest.stutas)
+                    .ToList();
+
+            }
+            // pageiation
+            if (page < 0)
+                page = 1;
+            var pagination = new
+            {
+                TotalNumberOfpage = Math.Ceiling(appointmant.Count() / 6.0),
+                CurrentPage = page
+
+            };
+            var returne = new
+            {
+                nameDoctor = appointmantFilterRequest.NameDoctor,
+                specialization = appointmantFilterRequest.Specialization,
+                Stutas = appointmantFilterRequest.stutas,
+                dateTime = appointmantFilterRequest.date,
+                appointmant = appointmant.Skip((page - 1) * 6).Take(6).ToList()
+
+            };
+
+            return Ok(new
+            {
+                Pagination = pagination,
+                Returne = returne
+
+            });
         }
 
-        
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Appointment>> GetAppointment(int id)
         {

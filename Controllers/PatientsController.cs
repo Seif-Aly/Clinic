@@ -1,5 +1,5 @@
 ﻿using Clinic_Complex_Management_System.Data;
-
+using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,11 +17,58 @@ namespace Clinic_Complex_Management_System.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Patient>>> GetPatients()
+        [HttpGet("GetPatients")]
+        public async Task<ActionResult<IEnumerable<Patient>>> GetPatients([FromQuery] PatientFilterRequest? patientFilterRequest, int page = 1)
         {
-            return await _context.Patients.ToListAsync();
+            var patiens = await _context.Patients.ToListAsync();
+            //filter the name 
+            if (patientFilterRequest is not null)
+            {
+                patiens = patiens.Where(e => e.FullName.Contains(patientFilterRequest.NamePationt)).ToList();
+            }
+            //filter the national
+            if (patientFilterRequest.National is not null)
+            {
+                patiens = patiens.Where(e => e.NationalId == patientFilterRequest.National).ToList();
+            }
+            //filter the date of brith
+            if (patientFilterRequest.dateOfBrith != null)
+            {
+                patiens = patiens.Where(e => e.DateOfBirth.Date == patientFilterRequest.dateOfBrith.Value.Date).ToList();
+            }
+            //filter the gender
+            if (patientFilterRequest.gender is not null)
+            {
+                patiens = patiens.Where(e => e.Gender == patientFilterRequest.gender).ToList();
+            }
+            //pagination
+            if (page < 0)
+            {
+                page = 1;
+            }
+            var Pagination = new
+            {
+                TotallNumberOfPage = Math.Ceiling(patiens.Count() / 6.0),
+                CurrentPage = page
+            };
+            //data
+            var Retuens = new
+            {
+                namepatient = patientFilterRequest.NamePationt,
+                gendetr = patientFilterRequest.gender,
+                national = patientFilterRequest.National,
+                dateofbrith = patientFilterRequest.dateOfBrith,
+                patiens = patiens.Skip((page - 1) * 6).Take(6).ToList()
+            };
+            return Ok(new
+            {
+                pagination = Pagination,
+                retuns = Retuens
+
+            });
+
         }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Patient>> GetPatient(int id)

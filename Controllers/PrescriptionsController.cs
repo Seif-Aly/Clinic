@@ -3,6 +3,7 @@ using Clinic_Complex_Management_System1.ViewModels;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Clinic_Complex_Management_System.DTos.Request;
 
 namespace Clinic_Complex_Management_System.Controllers
 {
@@ -17,9 +18,9 @@ namespace Clinic_Complex_Management_System.Controllers
             _context = context;
         }
 
-        
-        [HttpGet("all")]
-        public async Task<IActionResult> GetAllPrescriptions()
+
+        [HttpGet("GetAllPrescriptions")]
+        public async Task<IActionResult> GetAllPrescriptions([FromQuery] PrescriptionFilterRequest? prescriptionFilterRequest, int page = 1)
         {
             var prescriptions = await _context.Prescriptions
                 .Include(p => p.PrescriptionItems)
@@ -29,8 +30,55 @@ namespace Clinic_Complex_Management_System.Controllers
                     .ThenInclude(a => a.Patient)
                 .ToListAsync();
 
+            //filter the doctor
+            if (prescriptionFilterRequest.DoctorId is not null)
+            {
+                prescriptions = prescriptions.Where(e => e.DoctorId == prescriptionFilterRequest.DoctorId).ToList();
+            }
+            //filter the name doctor
+            if (prescriptionFilterRequest.NameDoctor is not null)
+            {
+                prescriptions = prescriptions.Where(e => e.Doctor.FullName.Contains(prescriptionFilterRequest.NameDoctor)).ToList();
+            }
+            // filter the pationt
+            if (prescriptionFilterRequest.PationtId is not null)
+            {
+                prescriptions = prescriptions.Where(e => e.PatientId == prescriptionFilterRequest.PationtId).ToList();
+            }
+            //filter the appointment
+            if (prescriptionFilterRequest.AppointmantId is not null)
+            {
+                prescriptions = prescriptions.Where(e => e.AppointmentId == prescriptionFilterRequest.AppointmantId).ToList();
+            }
+            //filter the date issued
+            if (prescriptionFilterRequest.DateIssued != null)
+            {
+                prescriptions = prescriptions.Where(e => e.DateIssued.Date == prescriptionFilterRequest.DateIssued.Value.Date).ToList();
+            }
+            //pagination
+            if (page < 0)
+            {
+                page = 1;
+            }
+            var pagination = new
+            {
+                TotallNumberOfPage = Math.Ceiling(prescriptions.Count() / 6.0),
+                currentpage = page
+            };
+            var Returns = new
+            {
+                doctorid = prescriptionFilterRequest.DoctorId,
+                doctorname = prescriptionFilterRequest.NameDoctor,
+                pationtid = prescriptionFilterRequest.PationtId,
+                appointmentid = prescriptionFilterRequest.AppointmantId,
+                dateissued = prescriptionFilterRequest.DateIssued,
+                prescriptions = prescriptions.Skip((page - 1) * 6).Take(6).ToList()
+            };
+
             return Ok(prescriptions);
         }
+
+
 
 
         [HttpGet("details/{id}")]

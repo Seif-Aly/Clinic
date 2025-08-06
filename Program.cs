@@ -2,6 +2,7 @@ using Clinic_Complex_Management_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 using System.Text;
 
 namespace Clinic_Complex_Management_System1
@@ -71,16 +72,18 @@ namespace Clinic_Complex_Management_System1
             var app = builder.Build();
 
             
-            if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment()|| app.Environment.IsProduction())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                app.MapOpenApi();
+                app.MapScalarApiReference();
+                //app.UseSwagger();
+                //app.UseSwaggerUI();
             }
-            else
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            //else
+            //{
+            //    app.UseSwagger();
+            //    app.UseSwaggerUI();
+            //}
 
           
             app.UseHttpsRedirection();

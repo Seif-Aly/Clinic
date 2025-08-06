@@ -1,5 +1,5 @@
 ﻿using Clinic_Complex_Management_System.Data;
-
+using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,11 +17,50 @@ namespace Clinic_Complex_Management_System.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Clinic>>> GetClinics()
+        [HttpGet("GetClinics")]
+        public async Task<ActionResult<IEnumerable<Clinic>>> GetClinics([FromQuery] ClinicFilterRequest? clinicFilterRequest, int page = 1)
         {
-            return await _context.Clinics.Include(c => c.Hospital).ToListAsync();
+            var clinic = await _context.Clinics.Include(c => c.Hospital).ToListAsync();
+            //filter the name clinic
+            if (clinicFilterRequest.NameClinic is not null)
+            {
+                clinic = clinic.Where(e => e.Name.Contains(clinicFilterRequest.NameClinic)).ToList();
+            }
+            //filter the name hospital
+            if (clinicFilterRequest.NmaeHospitale is not null)
+            {
+                clinic = clinic.Where(e => e.Hospital.Name.Contains(clinicFilterRequest.NmaeHospitale)).ToList();
+            }
+            //filter the specialztion
+            if (clinicFilterRequest.specialization is not null)
+            {
+                clinic = clinic.Where(e => e.Specialization == clinicFilterRequest.specialization).ToList();
+            }
+            //pagination
+            if (page < 0)
+            {
+                page = 1;
+            }
+            var Pagination = new
+            {
+                TotallNumberOfPage = Math.Ceiling(clinic.Count() / 6.0),
+                CurrentPage = page
+            };
+            var Returns = new
+            {
+                nameclinic = clinicFilterRequest.NameClinic,
+                namehospital = clinicFilterRequest.NmaeHospitale,
+                spescialization = clinicFilterRequest.specialization,
+                clinic = clinic.Skip((page - 1) * 6).Take(6).ToList()
+            };
+            return Ok(new
+            {
+                pagination = Pagination,
+                returns = Returns
+            });
+
         }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Clinic>> GetClinic(int id)

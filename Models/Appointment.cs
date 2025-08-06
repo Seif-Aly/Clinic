@@ -2,6 +2,8 @@
 {
     public class Appointment
     {
+        internal string stutas;
+
         public int Id { get; set; }
         public DateTime AppointmentDateTime { get; set; }
         public string ?Status { get; set; }
