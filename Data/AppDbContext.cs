@@ -1,8 +1,5 @@
-﻿
-using Clinic_Complex_Management_System1.Models;
+﻿using Clinic_Complex_Management_System1.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Reflection.Emit;
 
 namespace Clinic_Complex_Management_System.Data
 {
@@ -19,10 +16,6 @@ namespace Clinic_Complex_Management_System.Data
         public DbSet<Prescription> Prescriptions { get; set; }
         public DbSet<PrescriptionItem> PrescriptionItems { get; set; }
         public DbSet<User> Users { get; set; }
-
-        private readonly AppDbContext _context;
-
-        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Hospital>()
@@ -54,6 +47,10 @@ namespace Clinic_Complex_Management_System.Data
                 .HasMany(p => p.PrescriptionItems)
                 .WithOne(pi => pi.Prescription)
                 .HasForeignKey(pi => pi.PrescriptionId);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
         }
     }
 }

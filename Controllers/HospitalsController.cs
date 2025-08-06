@@ -1,6 +1,7 @@
 ﻿using Clinic_Complex_Management_System.Data;
 using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace Clinic_Complex_Management_System.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class HospitalsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -71,7 +73,7 @@ namespace Clinic_Complex_Management_System.Controllers
             return hospital;
         }
 
-        
+
         [HttpPut("{id}")]
         public async Task<IActionResult> PutHospital(int id, Hospital hospital)
         {
@@ -101,7 +103,7 @@ namespace Clinic_Complex_Management_System.Controllers
             return NoContent();
         }
 
-        
+
         [HttpPost]
         public async Task<ActionResult<Hospital>> PostHospital(Hospital hospital)
         {
@@ -111,7 +113,7 @@ namespace Clinic_Complex_Management_System.Controllers
             return CreatedAtAction("GetHospital", new { id = hospital.Id }, hospital);
         }
 
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteHospital(int id)
         {

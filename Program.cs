@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
+using System.Security.Claims;
 using System.Text;
 
 namespace Clinic_Complex_Management_System1
@@ -18,8 +19,8 @@ namespace Clinic_Complex_Management_System1
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-           
-            builder.Services.AddAuthentication("Bearer")
+            builder.Services
+                .AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
@@ -31,17 +32,17 @@ namespace Clinic_Complex_Management_System1
                         ValidIssuer = builder.Configuration["Jwt:Issuer"],
                         ValidAudience = builder.Configuration["Jwt:Audience"],
                         IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+                        RoleClaimType = ClaimTypes.Role,
+                        NameClaimType = ClaimTypes.NameIdentifier
                     };
                 });
 
             builder.Services.AddAuthorization();
 
-           
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
-                
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
@@ -52,7 +53,6 @@ namespace Clinic_Complex_Management_System1
                     Description = "Enter JWT token as: Bearer {your token}"
                 });
 
-                
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
@@ -64,28 +64,21 @@ namespace Clinic_Complex_Management_System1
                                 Id = "Bearer"
                             }
                         },
-                        new string[] {}
+                        Array.Empty<string>()
                     }
                 });
             });
 
             var app = builder.Build();
 
-            
-            if (app.Environment.IsDevelopment()|| app.Environment.IsProduction())
+            if (app.Environment.IsDevelopment())
             {
-                app.MapOpenApi();
-                app.MapScalarApiReference();
-                //app.UseSwagger();
-                //app.UseSwaggerUI();
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Clinic API V1");
+                });
             }
-            //else
-            //{
-            //    app.UseSwagger();
-            //    app.UseSwaggerUI();
-            //}
-
-          
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
