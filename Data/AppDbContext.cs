@@ -1,9 +1,11 @@
 ﻿using Clinic_Complex_Management_System1.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Clinic_Complex_Management_System.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
@@ -18,6 +20,8 @@ namespace Clinic_Complex_Management_System.Data
         public DbSet<User> Users { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<Hospital>()
                 .HasMany(h => h.Clinics)
                 .WithOne(c => c.Hospital)
@@ -48,9 +52,56 @@ namespace Clinic_Complex_Management_System.Data
                 .WithOne(pi => pi.Prescription)
                 .HasForeignKey(pi => pi.PrescriptionId);
 
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Username)
-                .IsUnique();
+            // Seed roles
+            var adminRoleId = new Guid("7dbc8218-e029-4644-a1ca-b27f30fb8a03");
+            var doctorRoleId = new Guid("bdc3d729-461f-4f56-8670-07f4e7174854");
+            var patientRoleId = new Guid("f9a500aa-4587-4aea-8795-f52fd4fb8581");
+            var adminUserId = new Guid("efd76860-e9b8-4a2e-a008-4d0bd4b6bf34");
+
+            modelBuilder.Entity<IdentityRole<Guid>>().HasData(
+                new IdentityRole<Guid>
+                {
+                    Id = adminRoleId,
+                    Name = "Admin",
+                    NormalizedName = "ADMIN"
+                },
+                new IdentityRole<Guid>
+                {
+                    Id = doctorRoleId,
+                    Name = "Doctor",
+                    NormalizedName = "DOCTOR"
+                },
+                new IdentityRole<Guid>
+                {
+                    Id = patientRoleId,
+                    Name = "Patient",
+                    NormalizedName = "PATIENT"
+                }
+            );
+
+            // Seed default Admin user
+            var adminUser = new User
+            {
+                Id = adminUserId,
+                UserName = "admin",
+                NormalizedUserName = "ADMIN",
+                Email = "admin@clinic.com",
+                NormalizedEmail = "ADMIN@CLINIC.COM",
+                EmailConfirmed = true,
+                SecurityStamp = "admin-security-stamp",
+                ConcurrencyStamp = "admin-concurrency-stamp",
+                PasswordHash = "AQAAAAIAAYagAAAAEE9kuPBZ2JrMW2m6pBLqmawlspU09L0WKUg5hetgTNTIBMMFtLcMM7Kwd8ABzw6uIg=="
+            };
+            modelBuilder.Entity<User>().HasData(adminUser);
+
+            // Assign Admin role to Admin user
+            modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(
+                new IdentityUserRole<Guid>
+                {
+                    UserId = adminUserId,
+                    RoleId = adminRoleId
+                }
+            );
         }
     }
 }

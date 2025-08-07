@@ -1,12 +1,9 @@
-﻿namespace Clinic_Complex_Management_System1.Models
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace Clinic_Complex_Management_System1.Models
 {
-    public class User
+    public class User : IdentityUser<Guid>
     {
-        public int Id { get; set; }
-        public string? Username { get; set; }
-        public string? Password { get; set; } 
-        public string? Role { get; set; }
-        public int? DoctorId { get; set; }
-        public int? PatientId { get; set; }
+
     }
 }

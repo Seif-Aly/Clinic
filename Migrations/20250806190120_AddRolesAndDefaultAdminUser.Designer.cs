@@ -4,6 +4,7 @@ using Clinic_Complex_Management_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Clinic_Complex_Management_System1.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250806190120_AddRolesAndDefaultAdminUser")]
+    partial class AddRolesAndDefaultAdminUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,10 +36,10 @@ namespace Clinic_Complex_Management_System1.Migrations
                     b.Property<DateTime>("AppointmentDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("DoctorId")
+                    b.Property<int>("DoctorId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PatientId")
+                    b.Property<int>("PatientId")
                         .HasColumnType("int");
 
                     b.Property<string>("Status")
@@ -59,7 +62,7 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("HospitalId")
+                    b.Property<int>("HospitalId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -83,7 +86,7 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ClinicId")
+                    b.Property<int>("ClinicId")
                         .HasColumnType("int");
 
                     b.Property<string>("Email")
@@ -166,7 +169,7 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AppointmentId")
+                    b.Property<int>("AppointmentId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("DateIssued")
@@ -175,20 +178,19 @@ namespace Clinic_Complex_Management_System1.Migrations
                     b.Property<string>("Diagnosis")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("DoctorId")
+                    b.Property<int>("DoctorId")
                         .HasColumnType("int");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("PatientId")
+                    b.Property<int>("PatientId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AppointmentId")
-                        .IsUnique()
-                        .HasFilter("[AppointmentId] IS NOT NULL");
+                        .IsUnique();
 
                     b.HasIndex("DoctorId");
 
@@ -217,7 +219,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                     b.Property<string>("MedicineName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("PrescriptionId")
+                    b.Property<int>("PrescriptionId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -473,11 +475,15 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.HasOne("Clinic_Complex_Management_System1.Models.Doctor", "Doctor")
                         .WithMany("Appointments")
-                        .HasForeignKey("DoctorId");
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Clinic_Complex_Management_System1.Models.Patient", "Patient")
                         .WithMany("Appointments")
-                        .HasForeignKey("PatientId");
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Doctor");
 
@@ -488,7 +494,9 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.HasOne("Clinic_Complex_Management_System1.Models.Hospital", "Hospital")
                         .WithMany("Clinics")
-                        .HasForeignKey("HospitalId");
+                        .HasForeignKey("HospitalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Hospital");
                 });
@@ -497,7 +505,9 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.HasOne("Clinic_Complex_Management_System1.Models.Clinic", "Clinic")
                         .WithMany("Doctors")
-                        .HasForeignKey("ClinicId");
+                        .HasForeignKey("ClinicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Clinic");
                 });
@@ -506,15 +516,21 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.HasOne("Clinic_Complex_Management_System1.Models.Appointment", "Appointment")
                         .WithOne("Prescription")
-                        .HasForeignKey("Clinic_Complex_Management_System1.Models.Prescription", "AppointmentId");
+                        .HasForeignKey("Clinic_Complex_Management_System1.Models.Prescription", "AppointmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Clinic_Complex_Management_System1.Models.Doctor", "Doctor")
                         .WithMany()
-                        .HasForeignKey("DoctorId");
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Clinic_Complex_Management_System1.Models.Patient", "Patient")
                         .WithMany()
-                        .HasForeignKey("PatientId");
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Appointment");
 
@@ -527,7 +543,9 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.HasOne("Clinic_Complex_Management_System1.Models.Prescription", "Prescription")
                         .WithMany("PrescriptionItems")
-                        .HasForeignKey("PrescriptionId");
+                        .HasForeignKey("PrescriptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Prescription");
                 });

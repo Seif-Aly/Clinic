@@ -9,10 +9,11 @@ namespace Clinic_Complex_Management_System.MappingProfile
         public ClinicProfile()
         {
             CreateMap<Clinic, ClinicDto>()
-                .ForMember(dest => dest.HospitalName, opt => opt.MapFrom(src => src.Hospital != null ? src.Hospital.Name : null));
+                .ForMember(dest => dest.HospitalName, opt => opt.MapFrom(src => src.Hospital != null ? src.Hospital.Name : null))
+                .ReverseMap();
 
-            CreateMap<CreateClinicDto, Clinic>();
-            CreateMap<UpdateClinicDto, Clinic>();
+            CreateMap<CreateClinicDto, Clinic>().ReverseMap();
+            CreateMap<UpdateClinicDto, Clinic>().ReverseMap();
         }
     }
 }
