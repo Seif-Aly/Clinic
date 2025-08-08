@@ -6,7 +6,6 @@ using Clinic_Complex_Management_System1.Models;
 using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Numerics;
 
 namespace Clinic_Complex_Management_System.Controllers
 {
@@ -110,34 +109,49 @@ namespace Clinic_Complex_Management_System.Controllers
             //    else throw;
             //}
             var clinic = updateClinicDto.Adapt<Clinic>();
-            var clinicOnDb = _context.Clinics.AsNoTracking().FirstOrDefault(e => e.Id ==id);
+            var clinicOnDb = _context.Clinics.AsNoTracking().FirstOrDefault(e => e.Id == id);
             if (clinicOnDb is not null)
             {
                 if (updateClinicDto.Image is not null && updateClinicDto.Image.Length > 0)
                 {
                     var filename = Guid.NewGuid().ToString() + Path.GetExtension(updateClinicDto.Image.FileName);
                     var pathname = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\clinic", filename);
-                    // save image in wwwroot
-                    using (var streem = System.IO.File.Create(pathname))
+                    try
                     {
-                        await updateClinicDto.Image.CopyToAsync(streem);
+                        // save image in wwwroot
+                        using (var streem = System.IO.File.Create(pathname))
+                        {
+                            await updateClinicDto.Image.CopyToAsync(streem);
+                        }
+                        //save image in db
+                        clinic.Image = pathname;
+                        //delet old image 
+                        var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\clinic", clinicOnDb.Image);
+                        if (System.IO.File.Exists(oldFilePath))
+                        {
+                            System.IO.File.Delete(oldFilePath);
+                        }
                     }
-                    //save image in db
-                    clinic.Image = pathname;
-                    //delet old image 
-                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\clinic", clinicOnDb.Image);
-                    if (System.IO.File.Exists(oldFilePath))
+                    catch (Exception ex)
                     {
-                        System.IO.File.Delete(oldFilePath);
+                        return StatusCode(500, new { error = "An error occurred while updating Image", details = ex.Message });
                     }
                 }
                 else
                 {
                     clinic.Image = clinicOnDb.Image;
                 }
-                _context.Clinics.Update(clinic);
-                _context.SaveChanges();
-                return Ok("succseefull update clinic");
+                try
+                {
+                    _context.Clinics.Update(clinic);
+                    _context.SaveChanges();
+                    return Ok("succseefull update clinic");
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+                }
+
             }
             return BadRequest(new { message = "No clinics found matching this ID." });
 
@@ -151,20 +165,33 @@ namespace Clinic_Complex_Management_System.Controllers
                 var filename = Guid.NewGuid().ToString() + Path.GetExtension(createClinicDto.Image.FileName);
                 var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\clinic", filename);
                 //save image in wwwroot
-                using (var streem = System.IO.File.Create(filepath))
+                try
                 {
-                    createClinicDto.Image.CopyTo(streem);
+                    using (var streem = System.IO.File.Create(filepath))
+                    {
+                        createClinicDto.Image.CopyTo(streem);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, new { error = "An error occurred while Saving Image to Database.", details = ex.Message });
                 }
                 //save image in db
                 clinic.Image = filepath;
-                _context.Clinics.Add(clinic);
-                _context.SaveChanges();
-                return Ok("successfull add clinic");
+                try
+                {
+                    _context.Clinics.Add(clinic);
+                    _context.SaveChanges();
+                    return Ok("successfull add clinic");
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+                }
+
                 // return CreatedAtAction("GetClinic", new { id = clinic.Id }, clinic);
-
-
             }
-            return BadRequest("Clinic data is required.");
+            return BadRequest(new { message = "Clinic data is required." });
 
         }
 
@@ -184,15 +211,23 @@ namespace Clinic_Complex_Management_System.Controllers
                 {
                     System.IO.File.Delete(filepath);
                 }
-                _context.Clinics.Remove(clinic);
-                await _context.SaveChangesAsync();
-                return Ok("succseefull delete clinic");
             }
             catch (Exception ex)
             {
 
-                return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+                return StatusCode(500, new { error = "An error occurred while Deleting Image", details = ex.Message });
             }
+            try
+            {
+                _context.Clinics.Remove(clinic);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while Deleting Image from DataBase.", details = ex.Message });
+
+            }
+            return Ok("succseefull delete clinic");
 
         }
 

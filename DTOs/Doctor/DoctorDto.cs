@@ -7,6 +7,8 @@
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? Specialization { get; set; }
+        public string? Image { get; set; }
+
         public string? ClinicName { get; set; } // from clinic
     }
 }

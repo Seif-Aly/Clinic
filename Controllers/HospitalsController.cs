@@ -60,7 +60,7 @@ namespace Clinic_Complex_Management_System.Controllers
                     {
                         namehospital = hospitaliFilterRequest.NameHospital,
                         address = hospitaliFilterRequest.Address,
-                        hospitals = hospitalDtos.Skip((page - 1) * 6).Take(6).ToList()
+                        hospitals = hospitalDtos
                     };
                     return Ok(new { pagination, returns });
                 }
@@ -134,42 +134,50 @@ namespace Clinic_Complex_Management_System.Controllers
             //}
 
             //return NoContent();
-
-            var hospitalindb = await _context.Hospitals.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
-            var hospitals = updateHospitalDto.Adapt<Hospital>();
-
-            if (hospitalindb is not null)
+            try
             {
-                if (updateHospitalDto.Image is not null && updateHospitalDto.Image.Length > 0)
-                {
-                    var filename = Guid.NewGuid().ToString() + Path.GetExtension(updateHospitalDto.Image.FileName);
-                    var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", filename);
-                    //save image in wwwroot
-                    using (var streem = System.IO.File.Create(filepath))
-                    {
-                        await updateHospitalDto.Image.CopyToAsync(streem);
-                    }
+                var hospitalindb = await _context.Hospitals.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+                var hospitals = updateHospitalDto.Adapt<Hospital>();
 
-                    // delet image old hospital in wwwroot
-                    var oldfilepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", hospitalindb.Image);
-                    if (System.IO.File.Exists(oldfilepath))
+                if (hospitalindb is not null)
+                {
+                    if (updateHospitalDto.Image is not null && updateHospitalDto.Image.Length > 0)
                     {
-                        System.IO.File.Delete(oldfilepath);
+                        var filename = Guid.NewGuid().ToString() + Path.GetExtension(updateHospitalDto.Image.FileName);
+                        var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", filename);
+                        //save image in wwwroot
+                        using (var streem = System.IO.File.Create(filepath))
+                        {
+                            await updateHospitalDto.Image.CopyToAsync(streem);
+                        }
+
+                        // delet image old hospital in wwwroot
+                        var oldfilepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", hospitalindb.Image);
+                        if (System.IO.File.Exists(oldfilepath))
+                        {
+                            System.IO.File.Delete(oldfilepath);
+                        }
+                        //save  image in db
+                        hospitals.Image = filepath;
+
                     }
-                    //save  image in db
-                    hospitals.Image = filepath;
+                    else
+                    {
+                        hospitals.Image = hospitalindb.Image;
+                    }
+                    _context.Hospitals.Update(hospitals);
+                    _context.SaveChanges();
+                    return Ok(new { message = "successfull update hospital" });
+                    //return CreatedAtAction("GetHospital", new { id = hospitals.Id}, hospitals);
 
                 }
-                else
-                {
-                    hospitals.Image = hospitalindb.Image;
-                }
-                _context.Hospitals.Update(hospitals);
-                _context.SaveChanges();
-                 return Ok("successfull update hospital");
-               //return CreatedAtAction("GetHospital", new { id = hospitals.Id}, hospitals);
-
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+            }
+
+
             return BadRequest("hospital data is required.");
         }
 
@@ -178,39 +186,50 @@ namespace Clinic_Complex_Management_System.Controllers
         public async Task<ActionResult<Hospital>> PostHospital([FromForm] CreateHospitalDto createHospitalDto)
         {
             var hospital = createHospitalDto.Adapt<Hospital>();
-            if (createHospitalDto.Image is not null && createHospitalDto.Image.Length > 0)
+            try
             {
-                var filename = Guid.NewGuid().ToString() + Path.GetExtension(createHospitalDto.Image.FileName);
-                var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", filename);
-                //save image in wwwroot
-                using (var streem = System.IO.File.Create(filepath))
+                if (createHospitalDto.Image is not null && createHospitalDto.Image.Length > 0)
                 {
-                    await createHospitalDto.Image.CopyToAsync(streem);
+                    var filename = Guid.NewGuid().ToString() + Path.GetExtension(createHospitalDto.Image.FileName);
+                    var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", filename);
+                    //save image in wwwroot
+                    using (var streem = System.IO.File.Create(filepath))
+                    {
+                        await createHospitalDto.Image.CopyToAsync(streem);
+                    }
+                    //save image in db
+                    hospital.Image = filepath;
                 }
-                //save image in db
-                hospital.Image = filepath;
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while saving image.", details = ex.Message });
+            }
+            try
+            {
+
                 await _context.Hospitals.AddAsync(hospital);
                 await _context.SaveChangesAsync();
-                return Ok("succssefull add hospital");
+                return Ok(new { message = "succssefull add hospital" });
                 //return CreatedAtAction("GetHospital", new { id = hospital.Id }, hospital);
             }
-
-            return BadRequest("hospital data is required.");
-
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while saving hospital to database.", details = ex.Message });
+            }
         }
 
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteHospital(int id)
         {
-
-            var hospital = await _context.Hospitals.FindAsync(id);
-            if (hospital == null)
-            {
-                return NotFound(new { message = "No hospitals found matching this ID." });
-            }
             try
             {
+                var hospital = await _context.Hospitals.FindAsync(id);
+                if (hospital == null)
+                {
+                    return NotFound(new { message = "No hospitals found matching this ID." });
+                }
                 // delet old image in wwwroot
                 var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", hospital.Image);
                 if (System.IO.File.Exists(oldFilePath))
@@ -220,12 +239,11 @@ namespace Clinic_Complex_Management_System.Controllers
                 //delete image in db
                 _context.Hospitals.Remove(hospital);
                 await _context.SaveChangesAsync();
-                return Ok("succseefull delete hospital");
+                return Ok(new { message = "succseefull delete hospital" });
             }
             catch (Exception ex)
             {
-
-                return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+                return StatusCode(500, new { error = "An error occurred while deleting hospital from database.", details = ex.Message });
             }
 
 
