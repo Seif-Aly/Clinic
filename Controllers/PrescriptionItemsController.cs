@@ -1,4 +1,5 @@
-﻿using Clinic_Complex_Management_System.Data;
+﻿using AutoMapper;
+using Clinic_Complex_Management_System.Data;
 using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +12,13 @@ namespace Clinic_Complex_Management_System.Controllers
     public class PrescriptionItemsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public PrescriptionItemsController(AppDbContext context)
+        public PrescriptionItemsController(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
+
         }
 
 
@@ -64,61 +68,72 @@ namespace Clinic_Complex_Management_System.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<PrescriptionItem>> GetPrescriptionItem(int id)
         {
-            var prescriptionItem = await _context.PrescriptionItems.Include(p => p.Prescription)
-                .FirstOrDefaultAsync(p => p.Id == id);
+            var item = await _context.PrescriptionItems
+                                     .Include(p => p.Prescription)
+                                     .FirstOrDefaultAsync(p => p.Id == id);
+            if (item == null)
+                return NotFound(new { message = "Prescription item not found." });
 
-            if (prescriptionItem == null)
-                return NotFound();
-
-            return prescriptionItem;
+            return Ok(item);
         }
 
-        
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPrescriptionItem(int id, PrescriptionItem prescriptionItem)
-        {
-            if (id != prescriptionItem.Id)
-                return BadRequest();
 
-            _context.Entry(prescriptionItem).State = EntityState.Modified;
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutPrescriptionItem(int id, PrescriptionItem item)
+        {
+            if (id != item.Id)
+                return BadRequest(new { message = "ID mismatch." });
+
+            _context.Entry(item).State = EntityState.Modified;
 
             try
             {
                 await _context.SaveChangesAsync();
+                return NoContent();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.PrescriptionItems.Any(e => e.Id == id))
-                    return NotFound();
-                else
-                    throw;
+                if (!await _context.PrescriptionItems.AnyAsync(e => e.Id == id))
+                    return NotFound(new { message = "Prescription item not found." });
+                return StatusCode(409, new { message = "Concurrency conflict occurred while updating. Please retry." });
             }
-
-            return NoContent();
         }
 
-        
+
+
         [HttpPost]
-        public async Task<ActionResult<PrescriptionItem>> PostPrescriptionItem(PrescriptionItem prescriptionItem)
+        public async Task<ActionResult<PrescriptionItem>> PostPrescriptionItem(PrescriptionItem item)
         {
-            _context.PrescriptionItems.Add(prescriptionItem);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetPrescriptionItem), new { id = prescriptionItem.Id }, prescriptionItem);
+            try
+            {
+                _context.PrescriptionItems.Add(item);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetPrescriptionItem), new { id = item.Id }, item);
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new { message = "Failed to save prescription item. Database error." });
+            }
         }
 
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePrescriptionItem(int id)
         {
-            var prescriptionItem = await _context.PrescriptionItems.FindAsync(id);
-            if (prescriptionItem == null)
-                return NotFound();
+            var item = await _context.PrescriptionItems.FindAsync(id);
+            if (item == null)
+                return NotFound(new { message = "Prescription item not found." });
 
-            _context.PrescriptionItems.Remove(prescriptionItem);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            try
+            {
+                _context.PrescriptionItems.Remove(item);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new { message = "Failed to delete prescription item. Database error." });
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Clinic_Complex_Management_System.Data;
+﻿using AutoMapper;
+using Clinic_Complex_Management_System.Data;
 using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -14,9 +15,13 @@ namespace Clinic_Complex_Management_System.Controllers
     {
         private readonly AppDbContext _context;
 
-        public PatientsController(AppDbContext context)
+        private readonly IMapper _mapper;
+
+
+        public PatientsController(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         [HttpGet("GetPatients")]
@@ -77,29 +82,43 @@ namespace Clinic_Complex_Management_System.Controllers
         {
             var patient = await _context.Patients.FindAsync(id);
             if (patient == null)
-                return NotFound();
+                return NotFound(new { message = "Patient not found." });
 
-            return patient;
+            return Ok(patient);
         }
 
         [HttpPost]
         public async Task<ActionResult<Patient>> PostPatient(Patient patient)
         {
-            _context.Patients.Add(patient);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction("GetPatient", new { id = patient.Id }, patient);
+            try
+            {
+                _context.Patients.Add(patient);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetPatient), new { id = patient.Id }, patient);
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new { message = "Failed to save patient. Database error." });
+            }
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutPatient(int id, Patient patient)
         {
             if (id != patient.Id)
-                return BadRequest();
+                return BadRequest(new { message = "ID mismatch." });
 
             _context.Entry(patient).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
 
-            return NoContent();
+            try
+            {
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new { message = "Failed to update patient. Database error." });
+            }
         }
 
         [HttpDelete("{id}")]
@@ -107,11 +126,18 @@ namespace Clinic_Complex_Management_System.Controllers
         {
             var patient = await _context.Patients.FindAsync(id);
             if (patient == null)
-                return NotFound();
+                return NotFound(new { message = "Patient not found." });
 
-            _context.Patients.Remove(patient);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            try
+            {
+                _context.Patients.Remove(patient);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new { message = "Failed to delete patient. Database error." });
+            }
         }
     }
 }

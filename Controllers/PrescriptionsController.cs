@@ -1,10 +1,11 @@
-﻿using Clinic_Complex_Management_System.Data;
-using Clinic_Complex_Management_System1.ViewModels;
+﻿using AutoMapper;
+using Clinic_Complex_Management_System.Data;
+using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.Models;
+using Clinic_Complex_Management_System1.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Clinic_Complex_Management_System.DTos.Request;
 using System.Security.Claims;
 
 namespace Clinic_Complex_Management_System.Controllers
@@ -15,14 +16,17 @@ namespace Clinic_Complex_Management_System.Controllers
     public class PrescriptionsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+
 
         private const string RoleAdmin = "Admin";
         private const string RoleDoctor = "Doctor";
         private const string RolePatient = "Patient";
 
-        public PrescriptionsController(AppDbContext context)
+        public PrescriptionsController(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         private string? CurrentRole => User.FindFirstValue(ClaimTypes.Role);
@@ -100,17 +104,10 @@ namespace Clinic_Complex_Management_System.Controllers
         [Authorize(Roles = $"{RoleDoctor},{RoleAdmin}")]
         public async Task<IActionResult> CreatePrescriptionWithItems([FromBody] PrescriptionWithItemsVM model)
         {
-            var appointment = await _context.Appointments
-                .FirstOrDefaultAsync(a => a.Id == model.AppointmentId);
-
-            if (appointment == null)
-                return BadRequest("Invalid Appointment");
-
-            if (CurrentRole == RoleDoctor)
-            {
-                if (CurrentDoctorId is null || appointment.DoctorId != CurrentDoctorId.Value)
-                    return Forbid();
-            }
+            var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == model.AppointmentId);
+            if (appointment == null) return BadRequest("Invalid Appointment");
+            if (CurrentRole == RoleDoctor && (CurrentDoctorId is null || appointment.DoctorId != CurrentDoctorId.Value))
+                return Forbid();
 
             var prescription = new Prescription
             {
@@ -128,10 +125,16 @@ namespace Clinic_Complex_Management_System.Controllers
                 }).ToList()
             };
 
-            _context.Prescriptions.Add(prescription);
-            await _context.SaveChangesAsync();
-
-            return Ok(prescription);
+            try
+            {
+                _context.Prescriptions.Add(prescription);
+                await _context.SaveChangesAsync();
+                return Ok(prescription);
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new { message = "Failed to create prescription. Database error." });
+            }
         }
 
         [HttpPut("{id}")]
@@ -143,14 +146,9 @@ namespace Clinic_Complex_Management_System.Controllers
                 .Include(p => p.Appointment)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (prescription == null)
-                return NotFound();
-
-            if (CurrentRole == RoleDoctor)
-            {
-                if (CurrentDoctorId is null || prescription.Appointment.DoctorId != CurrentDoctorId.Value)
-                    return Forbid();
-            }
+            if (prescription == null) return NotFound();
+            if (CurrentRole == RoleDoctor && prescription.Appointment.DoctorId != CurrentDoctorId)
+                return Forbid();
 
             prescription.Diagnosis = model.Diagnosis;
             prescription.Notes = model.Notes;
@@ -160,9 +158,7 @@ namespace Clinic_Complex_Management_System.Controllers
             {
                 var appt = await _context.Appointments.FindAsync(model.AppointmentId);
                 if (appt == null) return BadRequest("Invalid Appointment");
-
-                if (CurrentRole == RoleDoctor && appt.DoctorId != CurrentDoctorId)
-                    return Forbid();
+                if (CurrentRole == RoleDoctor && appt.DoctorId != CurrentDoctorId) return Forbid();
 
                 prescription.AppointmentId = appt.Id;
                 prescription.DoctorId = appt.DoctorId;
@@ -170,7 +166,6 @@ namespace Clinic_Complex_Management_System.Controllers
             }
 
             _context.PrescriptionItems.RemoveRange(prescription.PrescriptionItems);
-
             prescription.PrescriptionItems = model.Items.Select(i => new PrescriptionItem
             {
                 MedicineName = i.MedicationName,
@@ -178,10 +173,17 @@ namespace Clinic_Complex_Management_System.Controllers
                 Instructions = i.Instructions
             }).ToList();
 
-            await _context.SaveChangesAsync();
-
-            return Ok(prescription);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(prescription);
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new { message = "Failed to update prescription. Database error." });
+            }
         }
+
 
         [HttpDelete("{id}")]
         [Authorize(Roles = $"{RoleDoctor},{RoleAdmin}")]
@@ -192,20 +194,21 @@ namespace Clinic_Complex_Management_System.Controllers
                 .Include(p => p.Appointment)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (prescription == null)
-                return NotFound();
-
-            if (CurrentRole == RoleDoctor)
-            {
-                if (CurrentDoctorId is null || prescription.Appointment.DoctorId != CurrentDoctorId.Value)
-                    return Forbid();
-            }
+            if (prescription == null) return NotFound();
+            if (CurrentRole == RoleDoctor && prescription.Appointment.DoctorId != CurrentDoctorId) return Forbid();
 
             _context.PrescriptionItems.RemoveRange(prescription.PrescriptionItems);
             _context.Prescriptions.Remove(prescription);
 
-            await _context.SaveChangesAsync();
-            return NoContent();
+            try
+            {
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new { message = "Failed to delete prescription. Database error." });
+            }
         }
 
         [HttpGet("by-patient/{patientId}")]
