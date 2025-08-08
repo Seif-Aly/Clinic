@@ -3,6 +3,7 @@ using Clinic_Complex_Management_System.Data;
 using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System.DTOs.Hospital;
 using Clinic_Complex_Management_System1.Models;
+using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -77,7 +78,7 @@ namespace Clinic_Complex_Management_System.Controllers
 
 
 
-        [HttpGet("{id}")]
+        [HttpGet("GetHospital/{id}")]
         public async Task<ActionResult<HospitalDto>> GetHospital(int id)
         {
             try
@@ -99,61 +100,110 @@ namespace Clinic_Complex_Management_System.Controllers
         }
 
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutHospital(int id, UpdateHospitalDto hospital)
+        [HttpPut("PutHospital/{id}")]
+        public async Task<IActionResult> PutHospital(int id, [FromForm] UpdateHospitalDto updateHospitalDto)
         {
-            if (id != hospital.Id)
-            {
-                return BadRequest();
-            }
-            var existingHospital = await _context.Hospitals.FindAsync(id);
-            if (existingHospital == null)
-            {
-                return NotFound(new { message = "No hospitals found matching this ID." });
-            }
-            existingHospital.Name = hospital.Name;
-            existingHospital.Address = hospital.Address;
-            existingHospital.Phone = hospital.Phone;
-            _context.Entry(existingHospital).State = EntityState.Modified;
+            //if (id != hospital.Id)
+            //{
+            //    return BadRequest();
+            //}
+            //var existingHospital = await _context.Hospitals.FindAsync(id);
+            //if (existingHospital == null)
+            //{
+            //    return NotFound(new { message = "No hospitals found matching this ID." });
+            //}
+            //existingHospital.Name = hospital.Name;
+            //existingHospital.Address = hospital.Address;
+            //existingHospital.Phone = hospital.Phone;
+            //_context.Entry(existingHospital).State = EntityState.Modified;
 
-            try
+            //try
+            //{
+            //    await _context.SaveChangesAsync();
+            //}
+            //catch (Exception ex)
+            //{
+            //    if (!HospitalExists(id))
+            //    {
+            //        return NotFound(new { message = "No hospitals found matching this ID." });
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+            //    }
+            //}
+
+            //return NoContent();
+
+            var hospitalindb = await _context.Hospitals.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+            var hospitals = updateHospitalDto.Adapt<Hospital>();
+
+            if (hospitalindb is not null)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                if (!HospitalExists(id))
+                if (updateHospitalDto.Image is not null && updateHospitalDto.Image.Length > 0)
                 {
-                    return NotFound(new { message = "No hospitals found matching this ID." });
+                    var filename = Guid.NewGuid().ToString() + Path.GetExtension(updateHospitalDto.Image.FileName);
+                    var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", filename);
+                    //save image in wwwroot
+                    using (var streem = System.IO.File.Create(filepath))
+                    {
+                        await updateHospitalDto.Image.CopyToAsync(streem);
+                    }
+
+                    // delet image old hospital in wwwroot
+                    var oldfilepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", hospitalindb.Image);
+                    if (System.IO.File.Exists(oldfilepath))
+                    {
+                        System.IO.File.Delete(oldfilepath);
+                    }
+                    //save  image in db
+                    hospitals.Image = filepath;
+
                 }
                 else
                 {
-                    return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+                    hospitals.Image = hospitalindb.Image;
                 }
-            }
+                _context.Hospitals.Update(hospitals);
+                _context.SaveChanges();
+                 return Ok("successfull update hospital");
+               //return CreatedAtAction("GetHospital", new { id = hospitals.Id}, hospitals);
 
-            return NoContent();
+            }
+            return BadRequest("hospital data is required.");
         }
 
 
-        [HttpPost]
-        public async Task<ActionResult<HospitalDto>> PostHospital(CreateHospitalDto hospital)
+        [HttpPost("PostHospital")]
+        public async Task<ActionResult<Hospital>> PostHospital([FromForm] CreateHospitalDto createHospitalDto)
         {
-            if (string.IsNullOrWhiteSpace(hospital.Name) || string.IsNullOrWhiteSpace(hospital.Address) || string.IsNullOrWhiteSpace(hospital.Phone))
+            var hospital = createHospitalDto.Adapt<Hospital>();
+            if (createHospitalDto.Image is not null && createHospitalDto.Image.Length > 0)
             {
-                return BadRequest("Name, Address, and Phone are required.");
+                var filename = Guid.NewGuid().ToString() + Path.GetExtension(createHospitalDto.Image.FileName);
+                var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", filename);
+                //save image in wwwroot
+                using (var streem = System.IO.File.Create(filepath))
+                {
+                    await createHospitalDto.Image.CopyToAsync(streem);
+                }
+                //save image in db
+                hospital.Image = filepath;
+                await _context.Hospitals.AddAsync(hospital);
+                await _context.SaveChangesAsync();
+                return Ok("succssefull add hospital");
+                //return CreatedAtAction("GetHospital", new { id = hospital.Id }, hospital);
             }
-            var hospitalEntity = _mapper.Map<Hospital>(hospital);
-            _context.Hospitals.Add(hospitalEntity);
-            await _context.SaveChangesAsync();
-            var hospitalDto = _mapper.Map<HospitalDto>(hospitalEntity);
-            return CreatedAtAction("GetHospital", new { id = hospitalDto.Id }, hospitalDto);
+
+            return BadRequest("hospital data is required.");
+
         }
 
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteHospital(int id)
         {
+
             var hospital = await _context.Hospitals.FindAsync(id);
             if (hospital == null)
             {
@@ -161,10 +211,16 @@ namespace Clinic_Complex_Management_System.Controllers
             }
             try
             {
+                // delet old image in wwwroot
+                var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", hospital.Image);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+                //delete image in db
                 _context.Hospitals.Remove(hospital);
                 await _context.SaveChangesAsync();
-
-                return NoContent();
+                return Ok("succseefull delete hospital");
             }
             catch (Exception ex)
             {

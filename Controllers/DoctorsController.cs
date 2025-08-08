@@ -1,15 +1,18 @@
 ﻿using Clinic_Complex_Management_System.Data;
 using Clinic_Complex_Management_System.DTos.Request;
+using Clinic_Complex_Management_System1.DTOs.Doctor;
 using Clinic_Complex_Management_System1.Models;
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Numerics;
 
 namespace Clinic_Complex_Management_System.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class DoctorsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -82,44 +85,109 @@ namespace Clinic_Complex_Management_System.Controllers
             return doctor;
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutDoctor(int id, Doctor doctor)
+        [HttpPut("PutDoctor/{id}")]
+        public async Task<IActionResult> PutDoctor(int id, [FromForm] UpdateDoctorDto? updateDoctorDto)
         {
-            if (id != doctor.Id)
-                return BadRequest();
+            //if (id != doctor.Id)
+            //    return BadRequest();
 
-            _context.Entry(doctor).State = EntityState.Modified;
+            //_context.Entry(doctor).State = EntityState.Modified;
 
-            try { await _context.SaveChangesAsync(); }
-            catch (DbUpdateConcurrencyException)
+            //try { await _context.SaveChangesAsync(); }
+            //catch (DbUpdateConcurrencyException)
+            //{
+            //    if (!DoctorExists(id)) return NotFound();
+            //    else throw;
+            //}
+            var doctorInDb = await _context.Doctors.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+            var doctors = updateDoctorDto.Adapt<Doctor>();
+
+            if (doctorInDb is not null)
             {
-                if (!DoctorExists(id)) return NotFound();
-                else throw;
+                if (updateDoctorDto.Image is not null && updateDoctorDto.Image.Length > 0)
+                {
+                    var filename = Guid.NewGuid().ToString() + Path.GetExtension(updateDoctorDto.Image.FileName);
+                    var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\doctor", filename);
+                    //save image in wwwroot
+                    using (var streem = System.IO.File.Create(filepath))
+                    {
+                        await updateDoctorDto.Image.CopyToAsync(streem);
+                    }
+
+                    // delet image old hospital in wwwroot
+                    var oldfilepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\doctor", doctorInDb.images);
+                    if (System.IO.File.Exists(oldfilepath))
+                    {
+                        System.IO.File.Delete(oldfilepath);
+                    }
+                    //save  image in db
+                    doctors.images = filepath;
+
+                }
+                else
+                {
+                    doctors.images = doctorInDb.images;
+                }
+                _context.Doctors.Update(doctors);
+                _context.SaveChanges();
+               return Ok("successfull update doctors");
+               //return CreatedAtAction("GetDoctor", new { id = doctors.Id }, doctors);
             }
 
-            return NoContent();
+            return BadRequest(new { message = "No doctors found matching this ID." });
+
         }
 
-        [HttpPost]
-        public async Task<ActionResult<Doctor>> PostDoctor(Doctor doctor)
+        [HttpPost("PostDoctor")]
+        public async Task<ActionResult<Doctor>> PostDoctor([FromForm] CreateDoctorDto createDoctorDto)
         {
-            _context.Doctors.Add(doctor);
-            await _context.SaveChangesAsync();
+            var doctor = createDoctorDto.Adapt<Doctor>();
+            if (createDoctorDto.Image is not null && createDoctorDto.Image.Length > 0)
+            {
+                var filename = Guid.NewGuid().ToString() + Path.GetExtension(createDoctorDto.Image.FileName);
+                var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\doctor", filename);
+                //save image in wwwroot
+                using (var streem = System.IO.File.Create(filepath))
+                {
+                    await createDoctorDto.Image.CopyToAsync(streem);
+                }
+                //save image in db
+                doctor.images = filepath;
+               await _context.Doctors.AddAsync(doctor);
+                await _context.SaveChangesAsync();
+                return Ok("succssefull add doctors");
+                //return CreatedAtAction("GetDoctor", new { id = doctor.Id },doctor );
+            }
+            return BadRequest("doctors data is required.");
 
-            return CreatedAtAction("GetDoctor", new { id = doctor.Id }, doctor);
         }
-
-        [HttpDelete("{id}")]
+        [HttpDelete("DeleteDoctor/{id}")]
         public async Task<IActionResult> DeleteDoctor(int id)
         {
-            var doctor = await _context.Doctors.FindAsync(id);
+            var doctor =await _context.Doctors.FindAsync( id);
             if (doctor == null)
-                return NotFound();
+            {
+                return NotFound(new { message = "No doctors found matching this ID." });
+            }
+            try
+            {
+                // delet old image in wwwroot
+                var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\doctor", doctor.images);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+                //delete image in db
+                _context.Doctors.Remove(doctor);
+                await _context.SaveChangesAsync();
+                return Ok("succseefull delete doctors");
+            }
+            catch (Exception ex)
+            {
 
-            _context.Doctors.Remove(doctor);
-            await _context.SaveChangesAsync();
+                return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+            }
 
-            return NoContent();
         }
 
         private bool DoctorExists(int id)

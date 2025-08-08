@@ -10,6 +10,7 @@
 
         public int? ClinicId { get; set; }
         public Clinic? Clinic { get; set; }
+        public string? images { get; set; }
 
         public ICollection<Appointment>? Appointments { get; set; }
     }

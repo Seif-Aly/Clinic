@@ -9,6 +9,7 @@
 
         public int? HospitalId { get; set; }
         public Hospital? Hospital { get; set; }
+        public string? Image { get; set; }
 
         public ICollection<Doctor>? Doctors { get; set; }
     }

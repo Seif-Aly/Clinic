@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 using System.Security.Claims;
 using System.Text;
 
@@ -51,8 +52,10 @@ namespace Clinic_Complex_Management_System1
 
 
             builder.Services.AddAuthorization();
+          
 
             builder.Services.AddEndpointsApiExplorer();
+
             builder.Services.AddSwaggerGen(options =>
             {
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -87,7 +90,9 @@ namespace Clinic_Complex_Management_System1
 
             if (app.Environment.IsDevelopment())
             {
+                app.MapScalarApiReference();
                 app.UseSwagger();
+                app.UseSwaggerUI();
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Clinic API V1");
@@ -102,6 +107,7 @@ namespace Clinic_Complex_Management_System1
                 });
             }
             app.UseHttpsRedirection();
+            app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
 

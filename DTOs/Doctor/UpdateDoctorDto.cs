@@ -8,5 +8,7 @@
         public string? Phone { get; set; }
         public string? Specialization { get; set; }
         public int ClinicId { get; set; }
+        public IFormFile? Image { get; set; }
+
     }
 }

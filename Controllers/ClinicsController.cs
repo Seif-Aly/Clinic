@@ -3,8 +3,10 @@ using Clinic_Complex_Management_System.Data;
 using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System.DTOs.Clinic;
 using Clinic_Complex_Management_System1.Models;
+using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Numerics;
 
 namespace Clinic_Complex_Management_System.Controllers
 {
@@ -93,55 +95,105 @@ namespace Clinic_Complex_Management_System.Controllers
 
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutClinic(int id, UpdateClinicDto clinic)
+        [HttpPut("PutClinic/{id}")]
+        public async Task<IActionResult> PutClinic(int id, [FromForm] UpdateClinicDto updateClinicDto)
         {
-            if (id != clinic.Id)
-                return BadRequest();
-            var existingClinic = await _context.Clinics.FindAsync(id);
-            if (existingClinic == null)
-                return NotFound();
-            existingClinic.Name = clinic.Name;
-            existingClinic.Specialization = clinic.Specialization;
-            existingClinic.HospitalId = clinic.HospitalId;
-            _context.Entry(existingClinic).State = EntityState.Modified;
+            //if (id != clinic.Id)
+            //    return BadRequest();
 
-            try { await _context.SaveChangesAsync(); }
-            catch (Exception ex)
+            //_context.Entry(clinic).State = EntityState.Modified;
+
+            //try { await _context.SaveChangesAsync(); }
+            //catch (DbUpdateConcurrencyException)
+            //{
+            //    if (!ClinicExists(id)) return NotFound();
+            //    else throw;
+            //}
+            var clinic = updateClinicDto.Adapt<Clinic>();
+            var clinicOnDb = _context.Clinics.AsNoTracking().FirstOrDefault(e => e.Id ==id);
+            if (clinicOnDb is not null)
             {
-                if (!ClinicExists(id)) return NotFound(new { message = "No clinics found matching this ID." });
-
+                if (updateClinicDto.Image is not null && updateClinicDto.Image.Length > 0)
+                {
+                    var filename = Guid.NewGuid().ToString() + Path.GetExtension(updateClinicDto.Image.FileName);
+                    var pathname = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\clinic", filename);
+                    // save image in wwwroot
+                    using (var streem = System.IO.File.Create(pathname))
+                    {
+                        await updateClinicDto.Image.CopyToAsync(streem);
+                    }
+                    //save image in db
+                    clinic.Image = pathname;
+                    //delet old image 
+                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\clinic", clinicOnDb.Image);
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
                 else
-                    return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+                {
+                    clinic.Image = clinicOnDb.Image;
+                }
+                _context.Clinics.Update(clinic);
+                _context.SaveChanges();
+                return Ok("succseefull update clinic");
+            }
+            return BadRequest(new { message = "No clinics found matching this ID." });
+
+        }
+        [HttpPost("PostClinic")]
+        public async Task<ActionResult<Clinic>> PostClinic([FromForm] CreateClinicDto createClinicDto)
+        {
+            var clinic = createClinicDto.Adapt<Clinic>();
+            if (createClinicDto.Image is not null && createClinicDto.Image.Length > 0)
+            {
+                var filename = Guid.NewGuid().ToString() + Path.GetExtension(createClinicDto.Image.FileName);
+                var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\clinic", filename);
+                //save image in wwwroot
+                using (var streem = System.IO.File.Create(filepath))
+                {
+                    createClinicDto.Image.CopyTo(streem);
+                }
+                //save image in db
+                clinic.Image = filepath;
+                _context.Clinics.Add(clinic);
+                _context.SaveChanges();
+                return Ok("successfull add clinic");
+                // return CreatedAtAction("GetClinic", new { id = clinic.Id }, clinic);
+
 
             }
+            return BadRequest("Clinic data is required.");
 
-            return NoContent();
         }
 
-        [HttpPost]
-        public async Task<ActionResult<ClinicDto>> PostClinic(CreateClinicDto clinic)
-        {
-            if (clinic == null)
-                return BadRequest("Clinic data is required.");
-            var clinicEntity = _mapper.Map<Clinic>(clinic);
-            _context.Clinics.Add(clinicEntity);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetClinic", new { id = clinicEntity.Id }, clinic);
-        }
-
-        [HttpDelete("{id}")]
+        [HttpDelete("DeleteClinic/{id}")]
         public async Task<IActionResult> DeleteClinic(int id)
         {
             var clinic = await _context.Clinics.FindAsync(id);
             if (clinic == null)
-                return NotFound(new { message = "No clinics found matching this ID." });
+            {
+                return NotFound(new { message = "No clinic found matching this ID." });
+            }
+            try
+            {
+                //delet image in db
+                var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\clinic", clinic.Image);
+                if (System.IO.File.Exists(filepath))
+                {
+                    System.IO.File.Delete(filepath);
+                }
+                _context.Clinics.Remove(clinic);
+                await _context.SaveChangesAsync();
+                return Ok("succseefull delete clinic");
+            }
+            catch (Exception ex)
+            {
 
-            _context.Clinics.Remove(clinic);
-            await _context.SaveChangesAsync();
+                return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+            }
 
-            return NoContent();
         }
 
         private bool ClinicExists(int id)
