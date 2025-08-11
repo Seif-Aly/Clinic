@@ -7,6 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
+
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
@@ -53,6 +54,34 @@ public class AuthController : ControllerBase
 
         return BadRequest("Failed to assign role.");
     }
+   // [HttpPost("register")]
+   // public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+   // {
+   //     if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
+  //          return BadRequest("Username and password are required.");
+
+   //     var user = new User
+   //     {
+   //         UserName = dto.Username,
+   //         Email = dto.Username // Assuming email is used as username
+   //     };
+//
+ //       var result = await _userManager.CreateAsync(user, dto.Password);
+   //     if (!result.Succeeded)
+     //       return BadRequest(result.Errors);
+
+        // Assign default role if provided
+       // if (!string.IsNullOrWhiteSpace(dto.Role))
+        //{
+          //  await _userManager.AddToRoleAsync(user, dto.Role);
+        //}
+
+       // var roles = await _userManager.GetRolesAsync(user);
+       // var token = GenerateJwtToken(user, roles);
+
+   //     return Ok(new { Token = token });
+  //  }
+ 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
@@ -62,14 +91,15 @@ public class AuthController : ControllerBase
         var user = new User
         {
             UserName = dto.Username,
-            Email = dto.Username // Assuming email is used as username
+            Email = dto.Username
         };
 
         var result = await _userManager.CreateAsync(user, dto.Password);
+
         if (!result.Succeeded)
             return BadRequest(result.Errors);
 
-        // Assign default role if provided
+        // Optional: Add role
         if (!string.IsNullOrWhiteSpace(dto.Role))
         {
             await _userManager.AddToRoleAsync(user, dto.Role);
@@ -80,6 +110,8 @@ public class AuthController : ControllerBase
 
         return Ok(new { Token = token });
     }
+
+
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)

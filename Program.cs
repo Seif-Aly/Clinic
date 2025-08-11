@@ -84,7 +84,16 @@ namespace Clinic_Complex_Management_System1
                 });
             });
 
-
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowReactApp",
+                    policy =>
+                    {
+                        policy.WithOrigins("http://localhost:3000")
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+            });
 
             var app = builder.Build();
 
@@ -109,6 +118,7 @@ namespace Clinic_Complex_Management_System1
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseAuthentication();
+            app.UseCors("AllowReactApp");
             app.UseAuthorization();
 
             app.MapControllers();
