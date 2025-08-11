@@ -1,5 +1,6 @@
 ﻿using Clinic_Complex_Management_System.Data;
 using Clinic_Complex_Management_System1.Models;
+using Clinic_Complex_Management_System1.DTOs.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -54,55 +55,83 @@ public class AuthController : ControllerBase
 
         return BadRequest("Failed to assign role.");
     }
-   // [HttpPost("register")]
-   // public async Task<IActionResult> Register([FromBody] RegisterDto dto)
-   // {
-   //     if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
-  //          return BadRequest("Username and password are required.");
+    // [HttpPost("register")]
+    // public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+    // {
+    //     if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
+    //          return BadRequest("Username and password are required.");
 
-   //     var user = new User
-   //     {
-   //         UserName = dto.Username,
-   //         Email = dto.Username // Assuming email is used as username
-   //     };
-//
- //       var result = await _userManager.CreateAsync(user, dto.Password);
-   //     if (!result.Succeeded)
-     //       return BadRequest(result.Errors);
+    //     var user = new User
+    //     {
+    //         UserName = dto.Username,
+    //         Email = dto.Username // Assuming email is used as username
+    //     };
+    //
+    //       var result = await _userManager.CreateAsync(user, dto.Password);
+    //     if (!result.Succeeded)
+    //       return BadRequest(result.Errors);
 
-        // Assign default role if provided
-       // if (!string.IsNullOrWhiteSpace(dto.Role))
-        //{
-          //  await _userManager.AddToRoleAsync(user, dto.Role);
-        //}
+    // Assign default role if provided
+    // if (!string.IsNullOrWhiteSpace(dto.Role))
+    //{
+    //  await _userManager.AddToRoleAsync(user, dto.Role);
+    //}
 
-       // var roles = await _userManager.GetRolesAsync(user);
-       // var token = GenerateJwtToken(user, roles);
+    // var roles = await _userManager.GetRolesAsync(user);
+    // var token = GenerateJwtToken(user, roles);
 
-   //     return Ok(new { Token = token });
-  //  }
- 
+    //     return Ok(new { Token = token });
+    //  }
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
-            return BadRequest("Username and password are required.");
+        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+            return BadRequest("Email and password are required.");
+
+        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+        if (existingUser != null)
+            return BadRequest("Email is already registered.");
 
         var user = new User
         {
-            UserName = dto.Username,
-            Email = dto.Username
+            UserName = dto.Email, 
+            Email = dto.Email
         };
 
         var result = await _userManager.CreateAsync(user, dto.Password);
-
         if (!result.Succeeded)
             return BadRequest(result.Errors);
 
-        // Optional: Add role
-        if (!string.IsNullOrWhiteSpace(dto.Role))
+        var roles = await _userManager.GetRolesAsync(user);
+        var token = GenerateJwtToken(user, roles);
+
+        return Ok(new { Token = token });
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+            return BadRequest("Email and password are required.");
+
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        if (user == null)
         {
-            await _userManager.AddToRoleAsync(user, dto.Role);
+            Console.WriteLine("User not found for email: " + dto.Email);
+            return Unauthorized("Invalid email or password.");
+        }
+        else
+        {
+            Console.WriteLine("User found: " + user.UserName);
+        }
+
+
+        var passwordValid = await _userManager.CheckPasswordAsync(user, dto.Password);
+        if (!passwordValid)
+        {
+            Console.WriteLine("Password invalid for user: " + user.UserName);
+            return Unauthorized("Invalid email or password.");
         }
 
         var roles = await _userManager.GetRolesAsync(user);
@@ -112,26 +141,6 @@ public class AuthController : ControllerBase
     }
 
 
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto dto)
-    {
-        if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
-            return BadRequest("Username and password are required.");
-
-        var user = await _userManager.FindByNameAsync(dto.Username);
-        if (user == null)
-            return Unauthorized("Invalid username or password.");
-
-        var passwordValid = await _userManager.CheckPasswordAsync(user, dto.Password);
-        if (!passwordValid)
-            return Unauthorized("Invalid username or password.");
-
-        var roles = await _userManager.GetRolesAsync(user);
-        var token = GenerateJwtToken(user, roles);
-
-        return Ok(new { Token = token });
-    }
     private string GenerateJwtToken(User user, IList<string> roles)
     {
         var claims = new List<Claim>
@@ -196,11 +205,12 @@ public class AuthController : ControllerBase
         public string? Username { get; set; }
         public string? Password { get; set; }
         public string? Role { get; set; }
+        public string? Email { get; set; } 
     }
 
     public class LoginDto
     {
-        public string? Username { get; set; }
+        public string? Email { get; set; }
         public string? Password { get; set; }
     }
 }
