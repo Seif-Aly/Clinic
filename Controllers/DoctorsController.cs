@@ -243,20 +243,20 @@ namespace Clinic_Complex_Management_System.Controllers
 
                 try
                 {
-                    // تأكد إن المجلد موجود
+                    
                     var directoryPath = Path.GetDirectoryName(filepath);
                     if (!Directory.Exists(directoryPath))
                     {
                         Directory.CreateDirectory(directoryPath);
                     }
 
-                    // حفظ الصورة
+                    
                     using (var stream = System.IO.File.Create(filepath))
                     {
                         await createDoctorDto.Image.CopyToAsync(stream);
                     }
 
-                    // حفظ اسم الصورة فقط في قاعدة البيانات
+                   
                     doctor.images = filename;
 
                     await _context.Doctors.AddAsync(doctor);
@@ -271,7 +271,7 @@ namespace Clinic_Complex_Management_System.Controllers
                         error = "Error occurred while saving the doctor.",
                         details = ex.Message,
                         inner = ex.InnerException?.Message,
-                        stack = ex.StackTrace // ده هيساعدك تعرف فين المشكلة بالظبط
+                        stack = ex.StackTrace 
                     });
                 }
             }
