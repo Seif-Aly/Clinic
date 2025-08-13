@@ -191,45 +191,94 @@ namespace Clinic_Complex_Management_System.Controllers
 
         }
 
+        // [HttpPost("PostDoctor")]
+        //  public async Task<ActionResult<DoctorDto>> PostDoctor([FromForm] CreateDoctorDto createDoctorDto)
+        //{
+        //  var doctor = createDoctorDto.Adapt<Doctor>();
+        //if (createDoctorDto.Image is not null && createDoctorDto.Image.Length > 0)
+        //{
+        //  var filename = Guid.NewGuid().ToString() + Path.GetExtension(createDoctorDto.Image.FileName);
+        //var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\doctor", filename);
+        //save image in wwwroot
+        //try
+        // {
+        //   using (var streem = System.IO.File.Create(filepath))
+        // {
+        //   await createDoctorDto.Image.CopyToAsync(streem);
+        //}
+        //}
+        //catch (Exception ex)
+        //{
+
+        //  return StatusCode(500, new { error = "An error occurred while saving the image.", details = ex.Message });
+        //}
+
+        //save image in db
+        // doctor.images = filepath;
+        // try
+        // {
+        //await _context.Doctors.AddAsync(doctor);
+        //await _context.SaveChangesAsync();
+        //  return Ok(new { message = "succssefull add doctors" });
+        //}
+        //catch (Exception ex)
+        //{
+        //    return StatusCode(500, new { error = "An error occurred while saving the doctor.", details = ex.Message });
+        //  }
+        //return CreatedAtAction("GetDoctor", new { id = doctor.Id },doctor );
+        //}
+        //  return BadRequest("doctors data is required.");
+        //}
+
+
         [HttpPost("PostDoctor")]
         public async Task<ActionResult<DoctorDto>> PostDoctor([FromForm] CreateDoctorDto createDoctorDto)
         {
             var doctor = createDoctorDto.Adapt<Doctor>();
+
             if (createDoctorDto.Image is not null && createDoctorDto.Image.Length > 0)
             {
                 var filename = Guid.NewGuid().ToString() + Path.GetExtension(createDoctorDto.Image.FileName);
-                var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\doctor", filename);
-                //save image in wwwroot
+                var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "doctor", filename);
+
                 try
                 {
-                    using (var streem = System.IO.File.Create(filepath))
+                    // تأكد إن المجلد موجود
+                    var directoryPath = Path.GetDirectoryName(filepath);
+                    if (!Directory.Exists(directoryPath))
                     {
-                        await createDoctorDto.Image.CopyToAsync(streem);
+                        Directory.CreateDirectory(directoryPath);
                     }
-                }
-                catch (Exception ex)
-                {
 
-                    return StatusCode(500, new { error = "An error occurred while saving the image.", details = ex.Message });
-                }
+                    // حفظ الصورة
+                    using (var stream = System.IO.File.Create(filepath))
+                    {
+                        await createDoctorDto.Image.CopyToAsync(stream);
+                    }
 
-                //save image in db
-                doctor.images = filepath;
-                try
-                {
+                    // حفظ اسم الصورة فقط في قاعدة البيانات
+                    doctor.images = filename;
+
                     await _context.Doctors.AddAsync(doctor);
                     await _context.SaveChangesAsync();
-                    return Ok(new { message = "succssefull add doctors" });
+
+                    return Ok(new { message = "Doctor added successfully" });
                 }
                 catch (Exception ex)
                 {
-                    return StatusCode(500, new { error = "An error occurred while saving the doctor.", details = ex.Message });
+                    return StatusCode(500, new
+                    {
+                        error = "Error occurred while saving the doctor.",
+                        details = ex.Message,
+                        inner = ex.InnerException?.Message,
+                        stack = ex.StackTrace // ده هيساعدك تعرف فين المشكلة بالظبط
+                    });
                 }
-                //return CreatedAtAction("GetDoctor", new { id = doctor.Id },doctor );
             }
-            return BadRequest("doctors data is required.");
-
+            return BadRequest("Doctor data is required.");
         }
+
+
         [HttpDelete("DeleteDoctor/{id}")]
         public async Task<IActionResult> DeleteDoctor(int id)
         {
