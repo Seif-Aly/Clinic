@@ -21,7 +21,7 @@ export default function DashboardLayout() {
                 </nav>
 
                 <div className="mt-auto">
-                    <button className="btn btn-outline-light w-100" onClick={logout}>Login</button>
+                    <button className="btn btn-outline-light w-100" onClick={logout}>Logout</button>
                 </div>
             </aside>
 
