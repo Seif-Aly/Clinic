@@ -1,5 +1,11 @@
 using Clinic_Complex_Management_System.Data;
+using Clinic_Complex_Management_System.Repositories;
+using Clinic_Complex_Management_System.Services;
 using Clinic_Complex_Management_System1.Models;
+using Clinic_Complex_Management_System1.Repositories.Base;
+using Clinic_Complex_Management_System1.Repositories.Interfaces;
+using Clinic_Complex_Management_System1.Services.Base;
+using Clinic_Complex_Management_System1.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +22,7 @@ namespace Clinic_Complex_Management_System1
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
             var jwtKey = builder.Configuration["Jwt:Key"]!;
             var jwtIssuer = builder.Configuration["Jwt:Issuer"];
             var jwtAudience = builder.Configuration["Jwt:Audience"];
@@ -51,12 +58,10 @@ namespace Clinic_Complex_Management_System1
                 };
             });
 
-
             builder.Services.AddAuthorization();
-          
+
 
             builder.Services.AddEndpointsApiExplorer();
-
             builder.Services.AddSwaggerGen(options =>
             {
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -85,6 +90,7 @@ namespace Clinic_Complex_Management_System1
                 });
             });
 
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowReactApp",
@@ -98,13 +104,31 @@ namespace Clinic_Complex_Management_System1
                     });
             });
 
+            builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+            builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+            builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
+            builder.Services.AddScoped<IClinicService, ClinicService>();
+            builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
+            builder.Services.AddScoped<IDoctorService, DoctorService>();
+            builder.Services.AddScoped<IHospitalRepository, HospitalRepository>();
+            builder.Services.AddScoped<IHospitalService, HospitalService>();
+            builder.Services.AddScoped<IPatientRepository, PatientRepository>();
+            builder.Services.AddScoped<IPatientService, PatientService>();
+            builder.Services.AddScoped<IPrescriptionItemRepository, PrescriptionItemRepository>();
+            builder.Services.AddScoped<IPrescriptionItemService, PrescriptionItemService>();
+            builder.Services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
+            builder.Services.AddScoped<IPrescriptionService, PrescriptionService>();
+
+
+
+
             var app = builder.Build();
+
 
             if (app.Environment.IsDevelopment())
             {
                 app.MapScalarApiReference();
                 app.UseSwagger();
-                app.UseSwaggerUI();
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Clinic API V1");
@@ -118,15 +142,16 @@ namespace Clinic_Complex_Management_System1
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Clinic API V1");
                 });
             }
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseAuthentication();
             app.UseCors("AllowReactApp");
             app.UseAuthorization();
+            app.MapControllers();
             app.UseCors(AllowFrontend);
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
-            app.MapControllers();
             app.Run();
         }
     }

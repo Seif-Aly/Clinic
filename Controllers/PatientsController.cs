@@ -1,10 +1,8 @@
 ﻿using AutoMapper;
-using Clinic_Complex_Management_System.Data;
 using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Clinic_Complex_Management_System.Controllers
 {
@@ -13,74 +11,46 @@ namespace Clinic_Complex_Management_System.Controllers
     [Authorize(Roles = "Admin")]
     public class PatientsController : ControllerBase
     {
-        private readonly AppDbContext _context;
-
+        private readonly IPatientService _patientService;
         private readonly IMapper _mapper;
 
-
-        public PatientsController(AppDbContext context, IMapper mapper)
+        public PatientsController(IPatientService patientService, IMapper mapper)
         {
-            _context = context;
+            _patientService = patientService;
             _mapper = mapper;
         }
 
         [HttpGet("GetPatients")]
-        public async Task<ActionResult<IEnumerable<Patient>>> GetPatients([FromQuery] PatientFilterRequest? patientFilterRequest, int page = 1)
+        public async Task<ActionResult> GetPatients([FromQuery] PatientFilterRequest? patientFilterRequest, int page = 1)
         {
-            var patiens = await _context.Patients.ToListAsync();
-            //filter the name 
-            if (patientFilterRequest is not null)
+            var (patients, totalPages) = await _patientService.GetPatientsAsync(patientFilterRequest, page);
+
+            var pagination = new
             {
-                patiens = patiens.Where(e => e.FullName.Contains(patientFilterRequest.NamePationt)).ToList();
-            }
-            //filter the national
-            if (patientFilterRequest.National is not null)
-            {
-                patiens = patiens.Where(e => e.NationalId == patientFilterRequest.National).ToList();
-            }
-            //filter the date of brith
-            if (patientFilterRequest.dateOfBrith != null)
-            {
-                patiens = patiens.Where(e => e.DateOfBirth.Date == patientFilterRequest.dateOfBrith.Value.Date).ToList();
-            }
-            //filter the gender
-            if (patientFilterRequest.gender is not null)
-            {
-                patiens = patiens.Where(e => e.Gender == patientFilterRequest.gender).ToList();
-            }
-            //pagination
-            if (page < 0)
-            {
-                page = 1;
-            }
-            var Pagination = new
-            {
-                TotallNumberOfPage = Math.Ceiling(patiens.Count() / 6.0),
-                CurrentPage = page
+                TotallNumberOfPage = totalPages,
+                CurrentPage = page < 1 ? 1 : page
             };
-            //data
-            var Retuens = new
+
+            var returns = new
             {
-                namepatient = patientFilterRequest.NamePationt,
-                gendetr = patientFilterRequest.gender,
-                national = patientFilterRequest.National,
-                dateofbrith = patientFilterRequest.dateOfBrith,
-                patiens = patiens.Skip((page - 1) * 6).Take(6).ToList()
+                namepatient = patientFilterRequest?.NamePationt,
+                gendetr = patientFilterRequest?.gender,
+                national = patientFilterRequest?.National,
+                dateofbrith = patientFilterRequest?.dateOfBrith,
+                patients = patients
             };
+
             return Ok(new
             {
-                pagination = Pagination,
-                retuns = Retuens
-
+                pagination,
+                returns
             });
-
         }
-
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Patient>> GetPatient(int id)
         {
-            var patient = await _context.Patients.FindAsync(id);
+            var patient = await _patientService.GetPatientByIdAsync(id);
             if (patient == null)
                 return NotFound(new { message = "Patient not found." });
 
@@ -90,16 +60,11 @@ namespace Clinic_Complex_Management_System.Controllers
         [HttpPost]
         public async Task<ActionResult<Patient>> PostPatient(Patient patient)
         {
-            try
-            {
-                _context.Patients.Add(patient);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetPatient), new { id = patient.Id }, patient);
-            }
-            catch (DbUpdateException)
-            {
+            var created = await _patientService.CreatePatientAsync(patient);
+            if (!created)
                 return StatusCode(500, new { message = "Failed to save patient. Database error." });
-            }
+
+            return CreatedAtAction(nameof(GetPatient), new { id = patient.Id }, patient);
         }
 
         [HttpPut("{id}")]
@@ -108,36 +73,21 @@ namespace Clinic_Complex_Management_System.Controllers
             if (id != patient.Id)
                 return BadRequest(new { message = "ID mismatch." });
 
-            _context.Entry(patient).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateException)
-            {
+            var updated = await _patientService.UpdatePatientAsync(patient);
+            if (!updated)
                 return StatusCode(500, new { message = "Failed to update patient. Database error." });
-            }
+
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePatient(int id)
         {
-            var patient = await _context.Patients.FindAsync(id);
-            if (patient == null)
-                return NotFound(new { message = "Patient not found." });
+            var deleted = await _patientService.DeletePatientAsync(id);
+            if (!deleted)
+                return NotFound(new { message = "Patient not found or could not be deleted." });
 
-            try
-            {
-                _context.Patients.Remove(patient);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateException)
-            {
-                return StatusCode(500, new { message = "Failed to delete patient. Database error." });
-            }
+            return NoContent();
         }
     }
 }

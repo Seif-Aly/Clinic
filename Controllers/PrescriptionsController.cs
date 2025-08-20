@@ -1,244 +1,70 @@
-﻿using AutoMapper;
-using Clinic_Complex_Management_System.Data;
-using Clinic_Complex_Management_System.DTos.Request;
-using Clinic_Complex_Management_System1.Models;
+﻿using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System1.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
-namespace Clinic_Complex_Management_System.Controllers
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class PrescriptionsController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    [Authorize]
-    public class PrescriptionsController : ControllerBase
+    private readonly IPrescriptionService _service;
+
+    private string? CurrentRole => User.FindFirstValue(ClaimTypes.Role);
+    private int? CurrentDoctorId => int.TryParse(User.FindFirstValue("doctorId"), out var id) ? id : (int?)null;
+    private int? CurrentPatientId => int.TryParse(User.FindFirstValue("patientId"), out var id) ? id : (int?)null;
+
+    public PrescriptionsController(IPrescriptionService service)
     {
-        private readonly AppDbContext _context;
-        private readonly IMapper _mapper;
-
-
-        private const string RoleAdmin = "Admin";
-        private const string RoleDoctor = "Doctor";
-        private const string RolePatient = "Patient";
-
-        public PrescriptionsController(AppDbContext context, IMapper mapper)
-        {
-            _context = context;
-            _mapper = mapper;
-        }
-
-        private string? CurrentRole => User.FindFirstValue(ClaimTypes.Role);
-        private int? CurrentDoctorId => int.TryParse(User.FindFirstValue("doctorId"), out var id) ? id : (int?)null;
-        private int? CurrentPatientId => int.TryParse(User.FindFirstValue("patientId"), out var id) ? id : (int?)null;
-
-        [HttpGet("GetAllPrescriptions")]
-        public async Task<IActionResult> GetAllPrescriptions([FromQuery] PrescriptionFilterRequest? prescriptionFilterRequest, int page = 1)
-        {
-            IQueryable<Prescription> query = _context.Prescriptions
-                .Include(p => p.PrescriptionItems)
-                .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Doctor)
-                .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Patient);
-
-            if (CurrentRole == RolePatient && CurrentPatientId is not null)
-            {
-                query = query.Where(p => p.PatientId == CurrentPatientId.Value);
-            }
-            else if (CurrentRole == RoleDoctor && CurrentDoctorId is not null)
-            {
-                query = query.Where(p => p.DoctorId == CurrentDoctorId.Value);
-            }
-
-            if (prescriptionFilterRequest?.DoctorId is not null)
-                query = query.Where(e => e.DoctorId == prescriptionFilterRequest.DoctorId);
-            if (prescriptionFilterRequest?.NameDoctor is not null)
-                query = query.Where(e => e.Doctor.FullName.Contains(prescriptionFilterRequest.NameDoctor));
-            if (prescriptionFilterRequest?.PationtId is not null)
-                query = query.Where(e => e.PatientId == prescriptionFilterRequest.PationtId);
-            if (prescriptionFilterRequest?.AppointmantId is not null)
-                query = query.Where(e => e.AppointmentId == prescriptionFilterRequest.AppointmantId);
-            if (prescriptionFilterRequest?.DateIssued != null)
-                query = query.Where(e => e.DateIssued.Date == prescriptionFilterRequest.DateIssued.Value.Date);
-
-            if (page < 1) page = 1;
-
-            var total = await query.CountAsync();
-            var list = await query.OrderByDescending(p => p.DateIssued)
-                                  .Skip((page - 1) * 6)
-                                  .Take(6)
-                                  .ToListAsync();
-
-            return Ok(new
-            {
-                Pagination = new { TotallNumberOfPage = Math.Ceiling(total / 6.0), currentpage = page },
-                Data = list
-            });
-        }
-
-        [HttpGet("details/{id}")]
-        public async Task<IActionResult> GetPrescriptionDetails(int id)
-        {
-            var prescription = await _context.Prescriptions
-                .Include(p => p.PrescriptionItems)
-                .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Doctor)
-                .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Patient)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (prescription == null)
-                return NotFound();
-
-            if (CurrentRole == RolePatient && CurrentPatientId != prescription.PatientId)
-                return Forbid();
-            if (CurrentRole == RoleDoctor && CurrentDoctorId != prescription.DoctorId)
-                return Forbid();
-
-            return Ok(prescription);
-        }
-
-        [HttpPost("with-items")]
-        [Authorize(Roles = $"{RoleDoctor},{RoleAdmin}")]
-        public async Task<IActionResult> CreatePrescriptionWithItems([FromBody] PrescriptionWithItemsVM model)
-        {
-            var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == model.AppointmentId);
-            if (appointment == null) return BadRequest("Invalid Appointment");
-            if (CurrentRole == RoleDoctor && (CurrentDoctorId is null || appointment.DoctorId != CurrentDoctorId.Value))
-                return Forbid();
-
-            var prescription = new Prescription
-            {
-                Diagnosis = model.Diagnosis,
-                Notes = model.Notes,
-                DateIssued = model.DateIssued,
-                AppointmentId = model.AppointmentId,
-                DoctorId = appointment.DoctorId,
-                PatientId = appointment.PatientId,
-                PrescriptionItems = model.Items.Select(i => new PrescriptionItem
-                {
-                    MedicineName = i.MedicationName,
-                    Dosage = i.Dosage,
-                    Instructions = i.Instructions
-                }).ToList()
-            };
-
-            try
-            {
-                _context.Prescriptions.Add(prescription);
-                await _context.SaveChangesAsync();
-                return Ok(prescription);
-            }
-            catch (DbUpdateException)
-            {
-                return StatusCode(500, new { message = "Failed to create prescription. Database error." });
-            }
-        }
-
-        [HttpPut("{id}")]
-        [Authorize(Roles = $"{RoleDoctor},{RoleAdmin}")]
-        public async Task<IActionResult> UpdatePrescription(int id, [FromBody] PrescriptionWithItemsVM model)
-        {
-            var prescription = await _context.Prescriptions
-                .Include(p => p.PrescriptionItems)
-                .Include(p => p.Appointment)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (prescription == null) return NotFound();
-            if (CurrentRole == RoleDoctor && prescription.Appointment.DoctorId != CurrentDoctorId)
-                return Forbid();
-
-            prescription.Diagnosis = model.Diagnosis;
-            prescription.Notes = model.Notes;
-            prescription.DateIssued = model.DateIssued;
-
-            if (prescription.AppointmentId != model.AppointmentId)
-            {
-                var appt = await _context.Appointments.FindAsync(model.AppointmentId);
-                if (appt == null) return BadRequest("Invalid Appointment");
-                if (CurrentRole == RoleDoctor && appt.DoctorId != CurrentDoctorId) return Forbid();
-
-                prescription.AppointmentId = appt.Id;
-                prescription.DoctorId = appt.DoctorId;
-                prescription.PatientId = appt.PatientId;
-            }
-
-            _context.PrescriptionItems.RemoveRange(prescription.PrescriptionItems);
-            prescription.PrescriptionItems = model.Items.Select(i => new PrescriptionItem
-            {
-                MedicineName = i.MedicationName,
-                Dosage = i.Dosage,
-                Instructions = i.Instructions
-            }).ToList();
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return Ok(prescription);
-            }
-            catch (DbUpdateException)
-            {
-                return StatusCode(500, new { message = "Failed to update prescription. Database error." });
-            }
-        }
-
-
-        [HttpDelete("{id}")]
-        [Authorize(Roles = $"{RoleDoctor},{RoleAdmin}")]
-        public async Task<IActionResult> DeletePrescriptionWithItems(int id)
-        {
-            var prescription = await _context.Prescriptions
-                .Include(p => p.PrescriptionItems)
-                .Include(p => p.Appointment)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (prescription == null) return NotFound();
-            if (CurrentRole == RoleDoctor && prescription.Appointment.DoctorId != CurrentDoctorId) return Forbid();
-
-            _context.PrescriptionItems.RemoveRange(prescription.PrescriptionItems);
-            _context.Prescriptions.Remove(prescription);
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateException)
-            {
-                return StatusCode(500, new { message = "Failed to delete prescription. Database error." });
-            }
-        }
-
-        [HttpGet("by-patient/{patientId}")]
-        public async Task<ActionResult<IEnumerable<Prescription>>> GetPrescriptionsByPatient(int patientId)
-        {
-            if (CurrentRole == RolePatient && CurrentPatientId != patientId)
-                return Forbid();
-
-            if (CurrentRole == RoleDoctor)
-                return Forbid();
-
-            return await _context.Prescriptions
-                .Where(p => p.PatientId == patientId)
-                .Include(p => p.PrescriptionItems)
-                .ToListAsync();
-        }
-
-        [HttpGet("by-doctor/{doctorId}")]
-        public async Task<ActionResult<IEnumerable<Prescription>>> GetPrescriptionsByDoctor(int doctorId)
-        {
-            if (CurrentRole == RoleDoctor && CurrentDoctorId != doctorId)
-                return Forbid();
-
-            if (CurrentRole == RolePatient)
-                return Forbid();
-
-            return await _context.Prescriptions
-                .Where(p => p.DoctorId == doctorId)
-                .Include(p => p.PrescriptionItems)
-                .ToListAsync();
-        }
+        _service = service;
     }
-}
+
+    [HttpGet("GetAllPrescriptions")]
+    public async Task<IActionResult> GetAllPrescriptions([FromQuery] PrescriptionFilterRequest? filterRequest, int page = 1)
+    {
+        if (page < 1) page = 1;
+
+        var (prescriptions, totalPages) = await _service.GetPrescriptionsAsync(filterRequest, page, CurrentRole, CurrentDoctorId, CurrentPatientId);
+
+        return Ok(new
+        {
+            Pagination = new { TotallNumberOfPage = totalPages, currentpage = page },
+            Data = prescriptions
+        });
+    }
+
+    [HttpGet("details/{id}")]
+    public async Task<IActionResult> GetPrescriptionDetails(int id)
+    {
+        var prescription = await _service.GetPrescriptionByIdAsync(id, CurrentRole, CurrentDoctorId, CurrentPatientId);
+        if (prescription == null) return Forbid();
+
+        return Ok(prescription);
+    }
+
+    [HttpPost("with-items")]
+    [Authorize(Roles = "Doctor,Admin")]
+    public async Task<IActionResult> CreatePrescriptionWithItems([FromBody] PrescriptionWithItemsVM model)
+    {
+        var success = await _service.CreatePrescriptionAsync(model, CurrentRole, CurrentDoctorId);
+        if (!success) return BadRequest("Failed to create prescription.");
+
+        return Ok();
+    }
+
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Doctor,Admin")]
+    public async Task<IActionResult> UpdatePrescription(int id, [FromBody] PrescriptionWithItemsVM model)
+    {
+        var success = await _service.UpdatePrescriptionAsync(id, model, CurrentRole, CurrentDoctorId);
+        if (!success) return BadRequest("Failed to update prescription.");
+
+        return Ok();
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Doctor,Admin")]
+    public async Task<IActionResult> DeletePrescriptionWithItems(int id)
+    {
+        var success = await
