@@ -19,6 +19,7 @@ namespace Clinic_Complex_Management_System1
             var jwtKey = builder.Configuration["Jwt:Key"]!;
             var jwtIssuer = builder.Configuration["Jwt:Issuer"];
             var jwtAudience = builder.Configuration["Jwt:Audience"];
+            var AllowFrontend = "_AllowFrontend";
             builder.Services.AddControllers();
 
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -91,7 +92,9 @@ namespace Clinic_Complex_Management_System1
                     {
                         policy.WithOrigins("http://localhost:3000")
                               .AllowAnyHeader()
-                              .AllowAnyMethod();
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+
                     });
             });
 
@@ -120,6 +123,8 @@ namespace Clinic_Complex_Management_System1
             app.UseAuthentication();
             app.UseCors("AllowReactApp");
             app.UseAuthorization();
+            app.UseCors(AllowFrontend);
+            app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
             app.MapControllers();
             app.Run();
