@@ -21,13 +21,13 @@ namespace Clinic_Complex_Management_System.Controllers
         }
 
         [HttpGet("GetPatients")]
-        public async Task<ActionResult> GetPatients([FromQuery] PatientFilterRequest? patientFilterRequest, int page = 1)
+        public async Task<ActionResult> GetPatients([FromQuery] PatientFilterRequest? patientFilterRequest, int page = 1, int pageSize = 10)
         {
-            var (patients, totalPages) = await _patientService.GetPatientsAsync(patientFilterRequest, page);
+            var result = await _patientService.GetPatientsAsync(patientFilterRequest, page, pageSize);
 
             var pagination = new
             {
-                TotallNumberOfPage = totalPages,
+                TotallNumberOfPage = result.TotalPages,
                 CurrentPage = page < 1 ? 1 : page
             };
 
@@ -37,7 +37,7 @@ namespace Clinic_Complex_Management_System.Controllers
                 gendetr = patientFilterRequest?.gender,
                 national = patientFilterRequest?.National,
                 dateofbrith = patientFilterRequest?.dateOfBrith,
-                patients = patients
+                patients = result.Patients
             };
 
             return Ok(new

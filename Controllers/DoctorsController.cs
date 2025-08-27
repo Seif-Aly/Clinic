@@ -33,9 +33,7 @@ namespace Clinic_Complex_Management_System.Controllers
         [HttpPost("PostDoctor")]
         public async Task<IActionResult> PostDoctor([FromForm] CreateDoctorDto createDoctorDto)
         {
-            var result = await _doctorService.CreateDoctorAsync(createDoctorDto);
-            if (!result.Success)
-                return StatusCode(500, new { error = result.Message });
+            var result = await _doctorService.AddDoctorAsync(createDoctorDto);
 
             return Ok(new { message = "Doctor added successfully" });
         }
@@ -44,8 +42,8 @@ namespace Clinic_Complex_Management_System.Controllers
         public async Task<IActionResult> PutDoctor(int id, [FromForm] UpdateDoctorDto updateDoctorDto)
         {
             var result = await _doctorService.UpdateDoctorAsync(id, updateDoctorDto);
-            if (!result.Success)
-                return StatusCode(500, new { error = result.Message });
+            if (result == "Doctor not found.")
+                return StatusCode(500, new { error = result == "Doctor not found." });
 
             return Ok(new { message = "Doctor updated successfully" });
         }
@@ -54,8 +52,8 @@ namespace Clinic_Complex_Management_System.Controllers
         public async Task<IActionResult> DeleteDoctor(int id)
         {
             var result = await _doctorService.DeleteDoctorAsync(id);
-            if (!result.Success)
-                return StatusCode(500, new { error = result.Message });
+            if (result == "Doctor not found.")
+                return StatusCode(500, new { error = result == "Doctor not found." });
 
             return Ok(new { message = "Doctor deleted successfully" });
         }

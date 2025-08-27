@@ -1,4 +1,5 @@
 ﻿using Clinic_Complex_Management_System.DTos.Request;
+using Clinic_Complex_Management_System1.DTOs.Patient;
 using Clinic_Complex_Management_System1.Models;
 
 public class PatientService : IPatientService
@@ -11,7 +12,7 @@ public class PatientService : IPatientService
         _repository = repository;
     }
 
-    public async Task<(IEnumerable<Patient>, int totalPages)> GetPatientsAsync(PatientFilterRequest? filter, int page, int pageSize = DefaultPageSize)
+    public async Task<GetPatientsResult> GetPatientsAsync(PatientFilterRequest? filter, int page, int pageSize = DefaultPageSize)
     {
         var patients = (await _repository.GetAllAsync()).AsQueryable();
 
@@ -36,8 +37,10 @@ public class PatientService : IPatientService
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
-
-        return (pagedPatients, totalPages);
+        var patientsResult = new GetPatientsResult();
+        patientsResult.Patients = pagedPatients;
+        patientsResult.TotalPages = totalPages;
+        return patientsResult;
     }
 
     public async Task<Patient?> GetPatientByIdAsync(int id)
@@ -66,4 +69,6 @@ public class PatientService : IPatientService
         _repository.Remove(patient);
         return await _repository.SaveChangesAsync();
     }
+
+
 }

@@ -5,7 +5,7 @@ namespace Clinic_Complex_Management_System1.Services.Interfaces
 {
     public interface IDoctorService
     {
-        Task<(List<DoctorDto>, int)> GetDoctorsAsync(DoctorFilterRequest? filter, int page);
+        Task<GetDoctorsResult> GetDoctorsAsync(DoctorFilterRequest? filter, int page);
         Task<DoctorDto?> GetDoctorByIdAsync(int id);
         Task<string> AddDoctorAsync(CreateDoctorDto dto);
         Task<string> UpdateDoctorAsync(int id, UpdateDoctorDto dto);

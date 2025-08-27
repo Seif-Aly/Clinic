@@ -16,11 +16,16 @@ namespace Clinic_Complex_Management_System1.Services.Base
             _repository = repository;
         }
 
-        public async Task<(List<DoctorDto>, int)> GetDoctorsAsync(DoctorFilterRequest? filter, int page)
+        public async Task<GetDoctorsResult> GetDoctorsAsync(DoctorFilterRequest? filter, int page)
         {
             var doctors = await _repository.GetDoctorsAsync(filter?.NameDoctor, filter?.NameClinic, filter?.Specialization, page);
             var total = await _repository.GetTotalDoctorsCountAsync(filter?.NameDoctor, filter?.NameClinic, filter?.Specialization);
-            return (doctors.Adapt<List<DoctorDto>>(), total);
+            var result = new GetDoctorsResult
+            {
+                Doctors = doctors.Adapt<List<DoctorDto>>(),
+                TotalCount = total
+            };
+            return result;
         }
 
         public async Task<DoctorDto?> GetDoctorByIdAsync(int id)

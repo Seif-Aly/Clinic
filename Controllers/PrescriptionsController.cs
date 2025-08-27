@@ -1,4 +1,5 @@
 ﻿using Clinic_Complex_Management_System.DTos.Request;
+using Clinic_Complex_Management_System1.Models;
 using Clinic_Complex_Management_System1.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,4 +68,25 @@ public class PrescriptionsController : ControllerBase
     [Authorize(Roles = "Doctor,Admin")]
     public async Task<IActionResult> DeletePrescriptionWithItems(int id)
     {
-        var success = await
+        var success = await _service.DeletePrescriptionAsync(id, CurrentRole, CurrentDoctorId);
+        if (!success) return BadRequest("Failed to update prescription.");
+
+        return Ok();
+    }
+    [HttpGet("by-patient/{patientId}")]
+    public async Task<ActionResult<IEnumerable<Prescription>>> GetPrescriptionsByPatient(int patientId)
+    {
+
+        var prespections = await _service.GetPrescriptionsByPatientAsync(patientId, CurrentRole, CurrentPatientId);
+
+        return Ok(prespections);
+    }
+
+    [HttpGet("by-doctor/{doctorId}")]
+    public async Task<ActionResult<IEnumerable<Prescription>>> GetPrescriptionsByDoctor(int doctorId)
+    {
+        var prespections = await _service.GetPrescriptionsByDoctorAsync(doctorId, CurrentRole, CurrentPatientId);
+
+        return Ok(prespections);
+    }
+}

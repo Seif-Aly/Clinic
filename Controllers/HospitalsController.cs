@@ -26,22 +26,22 @@ public class HospitalsController : ControllerBase
     {
         try
         {
-            var (hospitals, totalCount) = await _hospitalService.GetHospitalsAsync(filter, page, PageSize);
+            var result = await _hospitalService.GetHospitalsAsync(filter, page);
 
-            if (!hospitals.Any())
+            if (result != null)
                 return NotFound(new { message = "No hospitals found matching the criteria." });
 
-            var hospitalDtos = _mapper.Map<List<HospitalDto>>(hospitals);
+
             var pagination = new
             {
-                TotalNumberOfPages = Math.Ceiling(totalCount / (double)PageSize),
+                TotalNumberOfPages = Math.Ceiling(result.TotalCount / (double)PageSize),
                 CurrentPage = page
             };
             var returns = new
             {
                 namehospital = filter?.NameHospital,
                 address = filter?.Address,
-                hospitals = hospitalDtos
+                hospitals = result.Hospitals
             };
             return Ok(new { pagination, returns });
         }

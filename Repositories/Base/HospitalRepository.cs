@@ -51,4 +51,16 @@ public class HospitalRepository : IHospitalRepository
     {
         return await _context.SaveChangesAsync() > 0;
     }
+
+    public async Task<int> GetTotalCountAsync(HospitaliFilterRequest? filter)
+    {
+        var query = _context.Hospitals.AsQueryable();
+
+        if (!string.IsNullOrEmpty(filter?.NameHospital))
+            query = query.Where(h => h.Name.Contains(filter.NameHospital));
+        if (!string.IsNullOrEmpty(filter?.Address))
+            query = query.Where(h => h.Address == filter.Address);
+
+        return await query.CountAsync();
+    }
 }

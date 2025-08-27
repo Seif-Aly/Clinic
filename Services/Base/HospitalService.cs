@@ -1,7 +1,10 @@
 ﻿using Clinic_Complex_Management_System.DTos.Request;
+using Clinic_Complex_Management_System.DTOs.Hospital;
+using Clinic_Complex_Management_System1.DTOs.Hospital;
 using Clinic_Complex_Management_System1.Models;
 using Clinic_Complex_Management_System1.Repositories.Interfaces;
 using Clinic_Complex_Management_System1.Services.Interfaces;
+using Mapster;
 
 namespace Clinic_Complex_Management_System1.Services.Base
 {
@@ -14,12 +17,17 @@ namespace Clinic_Complex_Management_System1.Services.Base
             _repository = repository;
         }
 
-        public async Task<(IEnumerable<Hospital>, int totalCount)> GetHospitalsAsync(HospitaliFilterRequest? filter, int page)
+        public async Task<GetHospitalsResult> GetHospitalsAsync(HospitaliFilterRequest? filter, int page)
         {
-            var hospitalsQuery = _repository.GetHospitalsAsync(filter, page);
+            var hospitals = await _repository.GetHospitalsAsync(filter, page);
             var totalCount = await _repository.GetTotalCountAsync(filter);
-            var hospitals = await hospitalsQuery;
-            return (hospitals, totalCount);
+
+            var result = new GetHospitalsResult
+            {
+                Hospitals = hospitals.Adapt<List<HospitalDto>>(),
+                TotalCount = totalCount
+            };
+            return result;
         }
 
 
