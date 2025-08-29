@@ -1,0 +1,129 @@
+/* ���� ������� ����� */
+body {
+  background: #f4f6f9;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+.sidebar-link {
+  color: #fff;
+  display: block;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+
+.sidebar-link:hover {
+  text-decoration: none;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.card-small {
+  border-radius: 10px;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+.container-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+/* Chatbot styles */
+.chatbot-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.chatbot-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 340px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 1050; /* above content */
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.chatbot-messages {
+  background: #f8f9fa;
+  padding: 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.chatbot-row {
+  display: flex;
+  margin: 8px 0;
+}
+
+.chatbot-bubble {
+  padding: 8px 12px;
+  border-radius: 12px;
+  max-width: 80%;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.chatbot-bubble.user {
+  background: #0d6efd;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.chatbot-bubble.bot {
+  background: white;
+  color: #212529;
+  border-bottom-left-radius: 4px;
+}
+
+.typing .dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 2px;
+  background: #adb5bd;
+  border-radius: 50%;
+  animation: bounce 1.2s infinite;
+}
+.typing .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
