@@ -41,7 +41,7 @@ export default function Patients() {
         <h4>Patients</h4>
         <button
           className="btn btn-primary"
-          onClick={() => navigate("/patient/new")}
+          onClick={() => navigate("/dashboard/patient/new")}
         >
           Add Patient
         </button>

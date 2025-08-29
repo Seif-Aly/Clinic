@@ -6,7 +6,7 @@ import ChatbotWidget from "./ChatbotWidget";
 export default function DashboardLayout() {
   const logout = () => {
     localStorage.removeItem("token");
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   let isAdmin = false;
@@ -46,29 +46,29 @@ export default function DashboardLayout() {
           <Link className="sidebar-link" to="/dashboard">
             Home
           </Link>
-          <Link className="sidebar-link" to="/doctors">
+          <Link className="sidebar-link" to="/dashboard/doctors">
             Doctors
           </Link>
-          <Link className="sidebar-link" to="/patients">
+          <Link className="sidebar-link" to="/dashboard/patients">
             patients
           </Link>
-          <Link className="sidebar-link" to="/appointments">
+          <Link className="sidebar-link" to="/dashboard/appointments">
             Appointments
           </Link>
-          <Link className="sidebar-link" to="/hospitals">
+          <Link className="sidebar-link" to="/dashboard/hospitals">
             Hospitals
           </Link>
-          <Link className="sidebar-link" to="/clinics">
+          <Link className="sidebar-link" to="/dashboard/clinics">
             Clinics
           </Link>
-          <Link className="sidebar-link" to="/prescriptions">
+          <Link className="sidebar-link" to="/dashboard/prescriptions">
             prescriptions
           </Link>
 
           {isAdmin && (
             <>
               <hr style={{ opacity: 0.2 }} />
-              <Link className="sidebar-link" to="/admins/new">
+              <Link className="sidebar-link" to="/dashboard/admins/new">
                 Add admin
               </Link>
             </>

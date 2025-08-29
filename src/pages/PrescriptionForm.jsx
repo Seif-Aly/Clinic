@@ -91,7 +91,7 @@ export default function PrescriptionForm() {
         await api.post("/prescriptions/with-items", payload);
       }
 
-      navigate("/prescriptions");
+      navigate("/dashboard/prescriptions");
     } catch (err) {
       setErrors(extractErrorMessages(err));
     } finally {

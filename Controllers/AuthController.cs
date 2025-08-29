@@ -29,21 +29,6 @@ public class AuthController : ControllerBase
         _userManager = userManager;
         _roleManager = roleManager;
     }
-    //public class RegisterDto
-    //{
-    //    public string? Username { get; set; }
-    //    public string? Password { get; set; }
-    //    public Guid? Role { get; set; } = null;
-    //}
-
-    //public class LoginDto
-    //{
-    //    public string? Username { get; set; }
-    //    public string? Password { get; set; }
-    //}
-
-
-
 
     [HttpPost("assign-role")]
     public async Task<IActionResult> AssignRole([FromBody] AssignRoleDto dto)
@@ -58,33 +43,6 @@ public class AuthController : ControllerBase
 
         return BadRequest(new { message = "Failed to assign role." });
     }
-    // [HttpPost("register")]
-    // public async Task<IActionResult> Register([FromBody] RegisterDto dto)
-    // {
-    //     if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
-    //          return BadRequest("Username and password are required.");
-
-    //     var user = new User
-    //     {
-    //         UserName = dto.Username,
-    //         Email = dto.Username // Assuming email is used as username
-    //     };
-    //
-    //       var result = await _userManager.CreateAsync(user, dto.Password);
-    //     if (!result.Succeeded)
-    //       return BadRequest(result.Errors);
-
-    // Assign default role if provided
-    // if (!string.IsNullOrWhiteSpace(dto.Role))
-    //{
-    //  await _userManager.AddToRoleAsync(user, dto.Role);
-    //}
-
-    // var roles = await _userManager.GetRolesAsync(user);
-    // var token = GenerateJwtToken(user, roles);
-
-    //     return Ok(new { Token = token });
-    //  }
 
     [HttpPost("register")]
     // [Authorize(Roles = "Admin")]
@@ -94,8 +52,6 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Email and password are required." });
 
         var role = "Admin";
-        if (!new[] { RoleAdmin, RoleDoctor, RolePatient }.Contains(role))
-            return BadRequest(new { message = "Role must be Admin, Doctor, or Patient" });
 
         var existingUser = await _userManager.FindByEmailAsync(dto.Email.Trim().ToLower());
         if (existingUser != null)
@@ -136,34 +92,38 @@ public class AuthController : ControllerBase
         var token = GenerateJwtToken(user, roles);
         return Ok(new { token });
     }
-    // public async Task<IActionResult> Register([FromBody] RegisterDto dto)
-    // {
-    //     if (!new[] { "Admin", "Doctor", "Patient" }.Contains(dto.Role))
-    //         return BadRequest(new { message = "Role must be Admin, Doctor, or Patient" });
 
-    //     if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
-    //         return BadRequest("Email and password are required.");
+    [AllowAnonymous]
+    [HttpPost("register-patient")]
+    public async Task<IActionResult> RegisterPatient([FromBody] LoginDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+            return BadRequest(new { message = "Email and password are required." });
 
-    //     var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-    //     if (existingUser != null)
-    //         return BadRequest("Email is already registered.");
+        var existingUser = await _userManager.FindByEmailAsync(dto.Email.Trim().ToLower());
+        if (existingUser != null)
+            return BadRequest(new { message = "Email is already registered." });
 
-    //     var user = new User
-    //     {
-    //         UserName = dto.Email,
-    //         Email = dto.Email
-    //     };
+        // ensure Patient role exists
+        if (!await _roleManager.RoleExistsAsync("Patient"))
+            await _roleManager.CreateAsync(new IdentityRole<Guid>("Patient"));
 
-    //     var result = await _userManager.CreateAsync(user, dto.Password);
-    //     if (!result.Succeeded)
-    //         return BadRequest(result.Errors);
+        var user = new User
+        {
+            UserName = dto.Email.Trim().ToLower(),
+            Email = dto.Email.Trim().ToLower(),
+            EmailConfirmed = true
+        };
+        var create = await _userManager.CreateAsync(user, dto.Password);
+        if (!create.Succeeded)
+            return BadRequest(new { message = "Failed to create user.", errors = create.Errors.Select(e => e.Description) });
 
-    //     var roles = await _userManager.GetRolesAsync(user);
-    //     var token = GenerateJwtToken(user, roles);
-    //     Console.WriteLine("User roles: " + string.Join(",", roles));
+        await _userManager.AddToRoleAsync(user, "Patient");
 
-    //     return Ok(new { token });
-    // }
+        var roles = await _userManager.GetRolesAsync(user);
+        var token = GenerateJwtToken(user, roles);
+        return Ok(new { token });
+    }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
@@ -195,11 +155,11 @@ public class AuthController : ControllerBase
         var roles = await _userManager.GetRolesAsync(user);
         var token = GenerateJwtToken(user, roles);
 
-        return Ok(new { Token = token });
+        return Ok(new { token });
     }
 
 
-private string GenerateJwtToken(User user, IList<string> roles)
+    private string GenerateJwtToken(User user, IList<string> roles)
     {
         var claims = new List<Claim>
         {
@@ -208,9 +168,11 @@ private string GenerateJwtToken(User user, IList<string> roles)
             new Claim(JwtRegisteredClaimNames.Email, user.Email ?? "")
         };
 
+        // Add both the standard Role claim type and a plain "role" claim.
         foreach (var role in roles)
         {
-            claims.Add(new Claim(ClaimTypes.Role, role));
+            claims.Add(new Claim(ClaimTypes.Role, role));         
+            claims.Add(new Claim("role", role));                 
         }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
@@ -226,32 +188,6 @@ private string GenerateJwtToken(User user, IList<string> roles)
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
-    //private async  Task<string> GenerateJwtToken(User user)
-    //{
-    //    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
-    //    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-    //    var claims = new List<Claim>
-    //        {
-    //            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-    //            new Claim(ClaimTypes.Name, user.UserName!),
-    //            new Claim(ClaimTypes.Email, user.Email ?? "")
-    //        };
-
-    //    // Add roles as claims
-    //    var roles = await _userManager.GetRolesAsync(user);
-    //    claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
-
-    //    var token = new JwtSecurityToken(
-    //        issuer: _config["Jwt:Issuer"],
-    //        audience: _config["Jwt:Audience"],
-    //        claims: claims,
-    //        expires: DateTime.UtcNow.AddDays(7),
-    //        signingCredentials: creds
-    //    );
-
-    //    return new JwtSecurityTokenHandler().WriteToken(token);
-    //}
     public class AssignRoleDto
     {
         public string UserId { get; set; }

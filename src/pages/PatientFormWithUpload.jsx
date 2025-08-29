@@ -55,7 +55,7 @@ export default function PatientFormWithUpload() {
       if (id) await updatePatient(id, payload);
       else await createPatient(payload);
 
-      navigate("/patients");
+      navigate("/dashboard/patients");
     } catch (err) {
       setErrors(extractErrorMessages(err));
     } finally {

@@ -1,13 +1,14 @@
 import React, { useState } from "react";
-import api from "../services/api";
-import { jwtDecode } from "jwt-decode";
+import api, { extractErrorMessages } from "../services/api";
 import ErrorsAlert from "../components/ErrorsAlert";
+import { jwtDecode } from "jwt-decode";
+import { Link } from "react-router-dom";
 
-export default function AdminLogin() {
+export default function PatientLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -15,9 +16,10 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       const res = await api.post("/Auth/login", { email, password });
-      const token = res.data?.token ?? res.data?.accessToken ?? res.data;
-      if (!token) throw ["No token"];
+      const token = res.data?.token ?? res.data?.Token ?? res.data;
+      if (!token) throw ["Login did not return a token."];
 
+      // check roles
       const decoded = jwtDecode(token);
       const rawRoles =
         decoded.role ??
@@ -29,40 +31,41 @@ export default function AdminLogin() {
         ? [rawRoles]
         : [];
 
-      if (!roles.includes("Admin") && !roles.includes("Doctor")) {
-        throw ["This login page is for Admin/Doctor only."];
+      if (!roles.includes("Patient")) {
+        throw ["This login page is for patients only."];
       }
 
       localStorage.setItem("token", token);
-      window.location.href = "/dashboard";
+      window.location.href = "/"; // back to home
     } catch (err) {
-      console.error(err);
-      const msg = err?.response?.data?.message || "Invalid email or password";
-      setErrors(Array.isArray(msg) ? msg : [msg]);
+      console.error("Login failed", err);
+      setErrors(extractErrorMessages(err));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100">
-      <form onSubmit={submit} className="card p-4" style={{ width: 360 }}>
-        <h4 className="text-center mb-3">Admin/Doctor Login</h4>
+    <div className="container py-4" style={{ maxWidth: 420 }}>
+      <h3 className="mb-3">Patient Login</h3>
 
-        <ErrorsAlert errors={errors} onClose={() => setErrors([])} />
+      <ErrorsAlert errors={errors} onClose={() => setErrors([])} />
 
+      <form onSubmit={submit} className="card p-3">
         <input
           className="form-control mb-2"
-          placeholder="Email"
           type="email"
+          placeholder="Email"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <input
           className="form-control mb-3"
-          placeholder="Password"
           type="password"
+          placeholder="Password"
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -75,6 +78,12 @@ export default function AdminLogin() {
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>
+
+      <div className="text-center mt-3">
+        <small>
+          Don’t have an account? <Link to="/register">Register</Link>
+        </small>
+      </div>
     </div>
   );
 }

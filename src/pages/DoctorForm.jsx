@@ -38,7 +38,7 @@ export default function DoctorForm() {
     try {
       if (id) await updateDoctor(id, model);
       else await createDoctor(model);
-      navigate("/doctors");
+      navigate("/dashboard/doctors");
     } catch (err) {
       setErrors(extractErrorMessages(err));
     } finally {

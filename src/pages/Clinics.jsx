@@ -36,7 +36,7 @@ export default function Clinics() {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4>Clinics</h4>
-        <Link to="/clinics/new" className="btn btn-primary">
+        <Link to="/dashboard/clinics/new" className="btn btn-primary">
           Add Clinic
         </Link>
       </div>
@@ -60,7 +60,7 @@ export default function Clinics() {
               <td>{c.hospitalName}</td>
               <td>
                 <Link
-                  to={`/clinics/${c.id}`}
+                  to={`/dashboard/clinics/${c.id}`}
                   className="btn btn-sm btn-warning me-1"
                 >
                   Edit

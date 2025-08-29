@@ -35,7 +35,7 @@ export default function PrescriptionsList() {
     <div>
       <div className="d-flex justify-content-between mb-3">
         <h4>prescriptions</h4>
-        <Link className="btn btn-primary" to="/prescriptions/new">
+        <Link className="btn btn-primary" to="/dashboard/prescriptions/new">
           Add a prescription
         </Link>
       </div>
@@ -66,13 +66,13 @@ export default function PrescriptionsList() {
               <td>
                 <Link
                   className="btn btn-sm btn-info me-1"
-                  to={`/prescriptions/${p.id}`}
+                  to={`/dashboard/prescriptions/${p.id}`}
                 >
                   View
                 </Link>
                 <Link
                   className="btn btn-sm btn-warning me-1"
-                  to={`/prescriptions/edit/${p.id}`}
+                  to={`/dashboard/prescriptions/edit/${p.id}`}
                 >
                   Edite
                 </Link>

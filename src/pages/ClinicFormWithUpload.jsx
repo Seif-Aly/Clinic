@@ -58,7 +58,7 @@ export default function ClinicFormWithUpload() {
         await api.post("/Clinics/PostClinic", fd);
       }
 
-      navigate("/clinics");
+      navigate("/dashboard/clinics");
     } catch (err) {
       setErrors(extractErrorMessages(err));
     } finally {

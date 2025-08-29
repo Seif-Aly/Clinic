@@ -1,62 +1,94 @@
 import React, { useState } from "react";
-import api, { extractErrorMessages } from "../services/api";
+import api from "../services/api";
 import ErrorsAlert from "../components/ErrorsAlert";
+import SuccessAlert from "../components/SuccessAlert";
 
-export default function AdminLogin() {
+export default function AddAdmin() {
   const [email, setEmail] = useState("");
+  const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const submit = async (e) => {
+  const [errors, setErrors] = useState([]);
+  const [success, setSuccess] = useState("");
+
+  async function submit(e) {
     e.preventDefault();
     setErrors([]);
-    setLoading(true);
-    try {
-      const res = await api.post("/Auth/login", { email, password });
-      const token =
-        res.data.token ?? res.data.accessToken ?? res.data?.Token ?? res.data;
-      if (!token) throw new Error("Login succeeded but no token was returned.");
-      localStorage.setItem("token", token);
-      window.location.href = "/dashboard";
-    } catch (err) {
-      setErrors(extractErrorMessages(err));
-    } finally {
-      setLoading(false);
+    setSuccess("");
+    if (password !== confirm) {
+      setErrors(["Passwords do not match."]);
+      return;
     }
-  };
+
+    setBusy(true);
+    try {
+      const payload = {
+        username: userName || email,
+        password,
+        role: "Admin",
+        email: email.trim().toLowerCase(),
+      };
+      const res = await api.post("/Auth/register", payload);
+
+      const token = res?.data?.token;
+      if (token) localStorage.setItem("token", token);
+
+      setSuccess("Admin user created successfully.");
+      setEmail("");
+      setUserName("");
+      setPassword("");
+      setConfirm("");
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.errors?.[0]?.description ||
+        "Failed to create admin.";
+      setErrors([msg]);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100">
-      <form onSubmit={submit} className="card p-4" style={{ width: 360 }}>
-        <h4 className="text-center mb-3">Admin Login</h4>
-
-        <ErrorsAlert errors={errors} onClose={() => setErrors([])} />
-
+    <div>
+      <h4>Add Admin</h4>
+      <SuccessAlert message={success} onClose={() => setSuccess("")} />
+      <ErrorsAlert errors={errors} onClose={() => setErrors([])} />
+      <form onSubmit={submit} style={{ maxWidth: 480 }}>
         <input
           className="form-control mb-2"
-          placeholder=" Email "
+          placeholder="Email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          autoComplete="username"
+          required
+        />
+        <input
+          className="form-control mb-2"
+          placeholder="Username (optional)"
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+        />
+        <input
+          className="form-control mb-2"
+          placeholder="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           required
         />
         <input
           className="form-control mb-3"
-          placeholder="Password "
+          placeholder="Confirm password"
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
           required
         />
-        <button
-          className="btn btn-primary w-100"
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? "Logging in..." : "Login"}
+        <button className="btn btn-primary" type="submit" disabled={busy}>
+          {busy ? "Saving..." : "Create Admin"}
         </button>
       </form>
     </div>

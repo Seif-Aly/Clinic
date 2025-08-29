@@ -18,26 +18,42 @@ export default function Dashboard() {
       setErrors([]);
       try {
         const [dRes, pRes, aRes, hRes] = await Promise.all([
-          api.get("/doctors"),
-          api.get("/patients"),
-          api.get("/appointments"),
-          api.get("/hospitals"),
+          api.get("/doctors/Getdoctors"),
+          api.get("/patients/GetPatients"),
+          api.get("/appointments/GetAppointments"),
+          api.get("/hospitals/GetHospitals"),
         ]);
 
+        const getCount = (data) => {
+          if (!data) return 0;
+          if (Array.isArray(data)) return data.length;
+
+          if (typeof data === "object") {
+            if ("count" in data) return data.count;
+            if ("totalCount" in data) return data.totalCount;
+
+            if ("doctors" in data) return getCount(data.doctors);
+            if ("patients" in data) return getCount(data.patients);
+            if ("appointments" in data) return getCount(data.appointments);
+            if ("hospitals" in data) return getCount(data.hospitals);
+
+            if ("returns" in data) return getCount(data.returns);
+          }
+
+          return 0;
+        };
+
         setStats({
-          doctors: Array.isArray(dRes.data)
-            ? dRes.data.length
-            : dRes.data.count ?? 0,
-          patients: Array.isArray(pRes.data)
-            ? pRes.data.length
-            : pRes.data.count ?? 0,
-          appointments: Array.isArray(aRes.data)
-            ? aRes.data.length
-            : aRes.data.count ?? 0,
-          hospitals: Array.isArray(hRes.data)
-            ? hRes.data.length
-            : hRes.data.count ?? 0,
+          doctors: getCount(dRes.data),
+          patients: getCount(pRes.data),
+          appointments: getCount(aRes.data),
+          hospitals: getCount(hRes.data),
         });
+
+        console.log("Doctors data:", dRes.data);
+        console.log("Patients data:", pRes.data);
+        console.log("Appointments data:", aRes.data);
+        console.log("Hospitals data:", hRes.data);
 
         const apps = Array.isArray(aRes.data)
           ? aRes.data.slice(-5).reverse()

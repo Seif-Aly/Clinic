@@ -47,7 +47,7 @@ export default function HospitalFormWithUpload() {
         await api.post("/Hospitals/PostHospital", formData);
       }
 
-      navigate("/hospitals");
+      navigate("/dashboard/hospitals");
     } catch (err) {
       setErrors(extractErrorMessages(err));
     } finally {

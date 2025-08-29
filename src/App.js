@@ -4,7 +4,6 @@ import DoctorFormWithUpload from "./pages/DoctorFormWithUpload";
 import PrescriptionsList from "./pages/PrescriptionsList";
 import PrescriptionForm from "./pages/PrescriptionForm";
 import PrescriptionDetails from "./pages/PrescriptionDetails";
-import Login from "./pages/Login";
 import { Routes, Route } from "react-router-dom";
 import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -21,19 +20,32 @@ import AddAdmin from "./pages/AddAdmin";
 import HospitalFormWithUpload from "./pages/HospitalFormWithUpload";
 import ClinicFormWithUpload from "./pages/ClinicFormWithUpload";
 import PatientFormWithUpload from "./pages/PatientFormWithUpload";
+import Home from "./pages/Home";
+import Booking from "./pages/Booking";
+import RegisterPatient from "./pages/RegisterPatient";
+import PatientLogin from "./pages/PatientLogin";
+import PatientAppointments from "./pages/PatientAppointments";
 
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/book/:id" element={<Booking />} />
+      <Route path="/register" element={<RegisterPatient />} />
+      <Route path="/patient-login" element={<PatientLogin />} />
+      <Route path="/my-appointments" element={<PatientAppointments />} />
+
       <Route path="/login" element={<AdminLogin />} />
       <Route
-        path="/"
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <DashboardLayout />
           </ProtectedRoute>
         }
       >
+        <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="appointments" element={<AppointmentsAdvanced />} />
         <Route path="doctors/new" element={<DoctorFormWithUpload />} />
         <Route path="doctors/:id" element={<DoctorFormWithUpload />} />
@@ -47,8 +59,6 @@ function App() {
         <Route path="prescriptions/new" element={<PrescriptionForm />} />
         <Route path="prescriptions/edit/:id" element={<PrescriptionForm />} />
         <Route path="prescriptions/:id" element={<PrescriptionDetails />} />
-        <Route index element={<Dashboard />} />
-        <Route path="dashboard" element={<Dashboard />} />
         <Route path="doctors" element={<Doctors />} />
         <Route path="doctors/new" element={<DoctorForm />} />
         <Route path="doctors/:id" element={<DoctorForm />} />

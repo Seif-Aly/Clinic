@@ -57,7 +57,7 @@ export default function DoctorFormWithUpload() {
       if (id) await updateDoctor(id, fd);
       else await createDoctor(fd);
 
-      navigate("/doctors");
+      navigate("/dashboard/doctors");
     } catch (err) {
       setErrors(extractErrorMessages(err));
     } finally {

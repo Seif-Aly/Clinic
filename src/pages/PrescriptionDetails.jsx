@@ -56,10 +56,13 @@ export default function PrescriptionDetails() {
       </ul>
 
       <div className="mt-3">
-        <Link to="/prescriptions" className="btn btn-secondary me-2">
+        <Link to="/dashboard/prescriptions" className="btn btn-secondary me-2">
           Back
         </Link>
-        <Link to={`/prescriptions/edit/${pres.id}`} className="btn btn-warning">
+        <Link
+          to={`/dashboard/prescriptions/edit/${pres.id}`}
+          className="btn btn-warning"
+        >
           Edit
         </Link>
       </div>
