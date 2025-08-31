@@ -55,9 +55,6 @@ namespace Clinic_Complex_Management_System1.Repositories.Base
 
         public async Task UpdateDoctorAsync(Doctor doctor)
         {
-<<<<<<< HEAD
-            _context.Doctors.Update(doctor);
-=======
            var existing = await _context.Doctors.FindAsync(doctor.Id);
             if (existing != null)
             {
@@ -66,7 +63,6 @@ namespace Clinic_Complex_Management_System1.Repositories.Base
 
             _context.Doctors.Update(doctor);
 
->>>>>>> main
             await _context.SaveChangesAsync();
         }
 

@@ -8,11 +8,7 @@ namespace Clinic_Complex_Management_System.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-<<<<<<< HEAD
-    [Authorize(Roles = "Admin")]
-=======
     // [Authorize(Roles = "Admin")]
->>>>>>> main
     public class PatientsController : ControllerBase
     {
         private readonly IPatientService _patientService;
