@@ -55,7 +55,18 @@ namespace Clinic_Complex_Management_System1.Repositories.Base
 
         public async Task UpdateDoctorAsync(Doctor doctor)
         {
+<<<<<<< HEAD
             _context.Doctors.Update(doctor);
+=======
+           var existing = await _context.Doctors.FindAsync(doctor.Id);
+            if (existing != null)
+            {
+                _context.Entry(existing).State = EntityState.Detached;
+            }
+
+            _context.Doctors.Update(doctor);
+
+>>>>>>> main
             await _context.SaveChangesAsync();
         }
 

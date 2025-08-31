@@ -9,8 +9,13 @@
         public int? DoctorId { get; set; }
         public Doctor? Doctor { get; set; }
 
+<<<<<<< HEAD
         public int? PatientId { get; set; }
         public Patient? Patient { get; set; }
+=======
+        public int PatientId { get; set; }
+        public Patient Patient { get; set; }
+>>>>>>> main
 
         public Prescription? Prescription { get; set; }
     }

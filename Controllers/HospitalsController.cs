@@ -28,7 +28,11 @@ public class HospitalsController : ControllerBase
         {
             var result = await _hospitalService.GetHospitalsAsync(filter, page);
 
+<<<<<<< HEAD
             if (result != null)
+=======
+            if (result == null || result.Hospitals == null || !result.Hospitals.Any())
+>>>>>>> main
                 return NotFound(new { message = "No hospitals found matching the criteria." });
 
 
@@ -78,8 +82,15 @@ public class HospitalsController : ControllerBase
             if (hospitalInDb == null)
                 return NotFound(new { message = "No hospitals found matching this ID." });
 
+<<<<<<< HEAD
             var updatedHospital = updateHospitalDto.Adapt<Hospital>();
             updatedHospital.Id = id; // مهم نحدد الـ Id عشان التحديث صح
+=======
+            hospitalInDb.Name = updateHospitalDto.Name;
+            hospitalInDb.Address = updateHospitalDto.Address;
+            hospitalInDb.Phone = updateHospitalDto.Phone;
+
+>>>>>>> main
 
             // التعامل مع الصورة
             if (updateHospitalDto.Image != null && updateHospitalDto.Image.Length > 0)
@@ -98,6 +109,7 @@ public class HospitalsController : ControllerBase
                     System.IO.File.Delete(oldFilePath);
                 }
 
+<<<<<<< HEAD
                 updatedHospital.Image = filename; // نخزن اسم الملف مش المسار الكامل
             }
             else
@@ -106,6 +118,16 @@ public class HospitalsController : ControllerBase
             }
 
             bool updated = await _hospitalService.UpdateHospitalAsync(updatedHospital);
+=======
+                hospitalInDb.Image = filename; // نخزن اسم الملف مش المسار الكامل
+            }
+            else
+            {
+                hospitalInDb.Image = hospitalInDb.Image;
+            }
+
+            bool updated = await _hospitalService.UpdateHospitalAsync(hospitalInDb);
+>>>>>>> main
 
             if (updated)
                 return Ok(new { message = "Successfully updated hospital" });
@@ -164,11 +186,21 @@ public class HospitalsController : ControllerBase
             if (hospital == null)
                 return NotFound(new { message = "No hospitals found matching this ID." });
 
+<<<<<<< HEAD
             // حذف الصورة القديمة
             var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", hospital.Image);
             if (System.IO.File.Exists(oldFilePath))
             {
                 System.IO.File.Delete(oldFilePath);
+=======
+            if (!string.IsNullOrEmpty(hospital.Image))
+            {
+                var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "Hospital", hospital.Image);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+>>>>>>> main
             }
 
             bool deleted = await _hospitalService.DeleteHospitalAsync(id);
@@ -183,4 +215,8 @@ public class HospitalsController : ControllerBase
             return StatusCode(500, new { error = "An error occurred while deleting hospital from database.", details = ex.Message });
         }
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 }

@@ -3,7 +3,10 @@ using System;
 using Clinic_Complex_Management_System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+<<<<<<< HEAD
 using Microsoft.EntityFrameworkCore.Metadata;
+=======
+>>>>>>> main
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -16,16 +19,21 @@ namespace Clinic_Complex_Management_System1.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
+<<<<<<< HEAD
             modelBuilder
                 .HasAnnotation("ProductVersion", "9.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+=======
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.8");
+>>>>>>> main
 
             modelBuilder.Entity("Clinic_Complex_Management_System1.Models.Appointment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
@@ -41,6 +49,21 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
+=======
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AppointmentDateTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("DoctorId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("Id");
 
@@ -55,6 +78,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
@@ -70,6 +94,21 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<string>("Specialization")
                         .HasColumnType("nvarchar(max)");
+=======
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("HospitalId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Specialization")
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("Id");
 
@@ -82,6 +121,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
@@ -103,6 +143,27 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<string>("images")
                         .HasColumnType("nvarchar(max)");
+=======
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ClinicId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FullName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Specialization")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("images")
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("Id");
 
@@ -115,6 +176,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
@@ -130,6 +192,21 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
+=======
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("Id");
 
@@ -140,6 +217,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
@@ -161,6 +239,27 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
+=======
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FullName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NationalId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("Id");
 
@@ -171,6 +270,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
@@ -192,12 +292,37 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<int?>("PatientId")
                         .HasColumnType("int");
+=======
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("AppointmentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("DateIssued")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Diagnosis")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("DoctorId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PatientId")
+                        .HasColumnType("INTEGER");
+>>>>>>> main
 
                     b.HasKey("Id");
 
                     b.HasIndex("AppointmentId")
+<<<<<<< HEAD
                         .IsUnique()
                         .HasFilter("[AppointmentId] IS NOT NULL");
+=======
+                        .IsUnique();
+>>>>>>> main
 
                     b.HasIndex("DoctorId");
 
@@ -210,6 +335,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
@@ -228,6 +354,24 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<int?>("PrescriptionId")
                         .HasColumnType("int");
+=======
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Dosage")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Duration")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Instructions")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MedicineName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PrescriptionId")
+                        .HasColumnType("INTEGER");
+>>>>>>> main
 
                     b.HasKey("Id");
 
@@ -240,6 +384,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("AccessFailedCount")
@@ -292,6 +437,60 @@ namespace Clinic_Complex_Management_System1.Migrations
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+=======
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("Id");
 
@@ -300,8 +499,12 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
+<<<<<<< HEAD
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+=======
+                        .HasDatabaseName("UserNameIndex");
+>>>>>>> main
 
                     b.ToTable("AspNetUsers", (string)null);
 
@@ -329,6 +532,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -342,13 +546,32 @@ namespace Clinic_Complex_Management_System1.Migrations
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+=======
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
+<<<<<<< HEAD
                         .HasDatabaseName("RoleNameIndex")
                         .HasFilter("[NormalizedName] IS NOT NULL");
+=======
+                        .HasDatabaseName("RoleNameIndex");
+>>>>>>> main
 
                     b.ToTable("AspNetRoles", (string)null);
 
@@ -377,6 +600,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
@@ -389,6 +613,18 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uniqueidentifier");
+=======
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("Id");
 
@@ -401,6 +637,7 @@ namespace Clinic_Complex_Management_System1.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
@@ -413,6 +650,18 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
+=======
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("Id");
 
@@ -424,6 +673,7 @@ namespace Clinic_Complex_Management_System1.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
                     b.Property<string>("LoginProvider")
+<<<<<<< HEAD
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderKey")
@@ -434,6 +684,18 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
+=======
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -445,10 +707,17 @@ namespace Clinic_Complex_Management_System1.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
                     b.Property<Guid>("UserId")
+<<<<<<< HEAD
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("RoleId")
                         .HasColumnType("uniqueidentifier");
+=======
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("UserId", "RoleId");
 
@@ -467,6 +736,7 @@ namespace Clinic_Complex_Management_System1.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
                     b.Property<Guid>("UserId")
+<<<<<<< HEAD
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("LoginProvider")
@@ -477,6 +747,18 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");
+=======
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("TEXT");
+>>>>>>> main
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
@@ -491,7 +773,13 @@ namespace Clinic_Complex_Management_System1.Migrations
 
                     b.HasOne("Clinic_Complex_Management_System1.Models.Patient", "Patient")
                         .WithMany("Appointments")
+<<<<<<< HEAD
                         .HasForeignKey("PatientId");
+=======
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+>>>>>>> main
 
                     b.Navigation("Doctor");
 

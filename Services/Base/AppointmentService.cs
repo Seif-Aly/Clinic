@@ -52,7 +52,17 @@ namespace Clinic_Complex_Management_System1.Services.Base
 
             var entity = _mapper.Map<Appointment>(dto);
             await _repository.AddAsync(entity);
+<<<<<<< HEAD
             return _mapper.Map<AppointmentDto>(entity);
+=======
+
+            var saved = await _context.Appointments
+                .Include(a => a.Patient)
+                .Include(a => a.Doctor)
+                .FirstOrDefaultAsync(a => a.Id == entity.Id);
+
+            return _mapper.Map<AppointmentDto>(saved);
+>>>>>>> main
         }
 
         public async Task<bool> UpdateAppointment(UpdateAppointmentDto dto)

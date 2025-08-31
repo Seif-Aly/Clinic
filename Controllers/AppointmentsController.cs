@@ -9,6 +9,7 @@ namespace Clinic_Complex_Management_System1.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+<<<<<<< HEAD
     [Authorize]
     public class AppointmentsController : ControllerBase
     {
@@ -16,6 +17,11 @@ namespace Clinic_Complex_Management_System1.Controllers
         private const string RoleAdmin = "Admin";
         private const string RoleDoctor = "Doctor";
         private const string RolePatient = "Patient";
+=======
+    public class AppointmentsController : ControllerBase
+    {
+        private readonly IAppointmentService _appointmentService;
+>>>>>>> main
 
         public AppointmentsController(IAppointmentService appointmentService)
         {
@@ -87,6 +93,7 @@ namespace Clinic_Complex_Management_System1.Controllers
         }
 
         [HttpPost]
+<<<<<<< HEAD
         [Authorize(Roles = $"{RoleAdmin},{RoleDoctor}")]
         public async Task<IActionResult> CreateAppointment(CreateAppointmentDto appointmentDto)
         {
@@ -105,11 +112,29 @@ namespace Clinic_Complex_Management_System1.Controllers
                     error = "An error occurred while creating your appointment.",
                     details = ex.Message
                 });
+=======
+        public async Task<IActionResult> CreateAppointment([FromBody] CreateAppointmentDto dto)
+        {
+            try
+            {
+                var result = await _appointmentService.CreateAppointment(dto, CurrentRole!, CurrentDoctorId);
+                if (result == null)
+                    return BadRequest(new { message = "Doctor or Patient not found, or no access." });
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Error creating appointment", details = ex.Message });
+>>>>>>> main
             }
         }
 
         [HttpPut("{id}")]
+<<<<<<< HEAD
         [Authorize(Roles = RoleAdmin)]
+=======
+>>>>>>> main
         public async Task<IActionResult> UpdateAppointment(int id, UpdateAppointmentDto appointmentDto)
         {
             if (id != appointmentDto.Id)
@@ -123,7 +148,10 @@ namespace Clinic_Complex_Management_System1.Controllers
         }
 
         [HttpDelete("{id}")]
+<<<<<<< HEAD
         [Authorize(Roles = RoleAdmin)]
+=======
+>>>>>>> main
         public async Task<IActionResult> DeleteAppointment(int id)
         {
             var success = await _appointmentService.DeleteAppointment(id);
