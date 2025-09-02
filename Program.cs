@@ -1,4 +1,4 @@
-using Clinic_Complex_Management_System.Data;
+﻿using Clinic_Complex_Management_System.Data;
 using Clinic_Complex_Management_System.Repositories;
 using Clinic_Complex_Management_System.Services;
 using Clinic_Complex_Management_System1.Models;
@@ -32,11 +32,27 @@ namespace Clinic_Complex_Management_System1
 
             // SQLITE in dev
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
             builder.Services.AddIdentity<User, IdentityRole<Guid>>()
                             .AddEntityFrameworkStores<AppDbContext>()
                             .AddDefaultTokenProviders();
+
+            // ✅ مهم: إلغاء الـ Redirect للـ /Account/Login
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                };
+            });
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -92,8 +108,8 @@ namespace Clinic_Complex_Management_System1
                 {
                     policy.WithOrigins("http://localhost:3000")
                           .AllowAnyHeader()
-                          .AllowAnyMethod();
-                    // .AllowCredentials(); // Not needed unless you actually use cookies
+                          .AllowAnyMethod()
+                          .AllowCredentials();
                 });
             });
 
@@ -132,9 +148,10 @@ namespace Clinic_Complex_Management_System1
                 });
             }
 
-            app.UseHttpsRedirection();
+           // app.UseHttpsRedirection();
             app.UseStaticFiles();
 
+            
             app.UseCors("AllowReactApp");
 
             app.UseAuthentication();
