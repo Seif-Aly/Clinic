@@ -10,5 +10,6 @@ namespace Clinic_Complex_Management_System1.Repositories.Interfaces
         Task AddDoctorAsync(Doctor doctor);
         Task UpdateDoctorAsync(Doctor doctor);
         Task DeleteDoctorAsync(Doctor doctor);
+        Task<bool> SaveChangesAsync();
     }
 }

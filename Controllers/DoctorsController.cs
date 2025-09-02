@@ -1,6 +1,10 @@
 ﻿using Clinic_Complex_Management_System.DTos.Request;
+using Clinic_Complex_Management_System.DTOs.Hospital;
 using Clinic_Complex_Management_System1.DTOs.Doctor;
+using Clinic_Complex_Management_System1.Models;
+using Clinic_Complex_Management_System1.Services.Base;
 using Clinic_Complex_Management_System1.Services.Interfaces;
+using Mapster;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Clinic_Complex_Management_System.Controllers
@@ -33,29 +37,108 @@ namespace Clinic_Complex_Management_System.Controllers
         [HttpPost("PostDoctor")]
         public async Task<IActionResult> PostDoctor([FromForm] CreateDoctorDto createDoctorDto)
         {
-            var result = await _doctorService.AddDoctorAsync(createDoctorDto);
+            var doctors = createDoctorDto.Adapt<Doctor>();
 
-            return Ok(new { message = "Doctor added successfully" });
+            try
+            {
+                if (createDoctorDto.Image != null && createDoctorDto.Image.Length > 0)
+                {
+                    var filename = Guid.NewGuid().ToString() + Path.GetExtension(createDoctorDto.Image.FileName);
+                    var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\doctor", filename);
+                    using (var stream = System.IO.File.Create(filepath))
+                    {
+                        await createDoctorDto.Image.CopyToAsync(stream);
+                    }
+                    doctors.images = filename; // نخزن اسم الملف فقط
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while saving image.", details = ex.Message });
+            }
+            await _doctorService.AddDoctorAsync(doctors);
+            return Ok(new { message = "Successfully added doctor" });
+
+            
         }
 
         [HttpPut("PutDoctor/{id}")]
         public async Task<IActionResult> PutDoctor(int id, [FromForm] UpdateDoctorDto updateDoctorDto)
         {
-            var result = await _doctorService.UpdateDoctorAsync(id, updateDoctorDto);
-            if (result == "Doctor not found.")
-                return StatusCode(500, new { error = result == "Doctor not found." });
+           
+            try
+            {
+                var doctorInDb = await _doctorService.GetDoctorByIdAsync(id);
+                if (doctorInDb == null)
+                    return NotFound(new { message = "No doctor found matching this ID." });
 
-            return Ok(new { message = "Doctor updated successfully" });
+                doctorInDb.FullName = updateDoctorDto.FullName;
+                doctorInDb.Email = updateDoctorDto.Email;
+                doctorInDb.Phone = updateDoctorDto.Phone;
+                doctorInDb.Specialization = updateDoctorDto.Specialization;
+                doctorInDb.ClinicId = updateDoctorDto.ClinicId;
+
+
+                // التعامل مع الصورة
+                if (updateDoctorDto.Image != null && updateDoctorDto.Image.Length > 0)
+                {
+                    var filename = Guid.NewGuid().ToString() + Path.GetExtension(updateDoctorDto.Image.FileName);
+                    var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\doctor", filename);
+                    using (var stream = System.IO.File.Create(filepath))
+                    {
+                        await updateDoctorDto.Image.CopyToAsync(stream);
+                    }
+
+                    // حذف الصورة القديمة
+                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\doctor", doctorInDb.images);
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+
+                    doctorInDb.images = filename; // نخزن اسم الملف مش المسار الكامل
+                }
+                else
+                {
+                    doctorInDb.images = doctorInDb.images;
+                }
+
+                await _doctorService.UpdateDoctorAsync(doctorInDb);
+
+               return Ok(new { message = "Successfully updated hospital" });
+              
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
+            }
         }
 
         [HttpDelete("DeleteDoctor/{id}")]
         public async Task<IActionResult> DeleteDoctor(int id)
         {
-            var result = await _doctorService.DeleteDoctorAsync(id);
-            if (result == "Doctor not found.")
-                return StatusCode(500, new { error = result == "Doctor not found." });
+           
+                var doctor = await _doctorService.GetDoctorByIdAsync(id);
+                if (doctor == null)
+                    return NotFound(new { message = "No doctor found matching this ID." });
+            try
+            {
+                var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "doctor", doctor.images);
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                
 
-            return Ok(new { message = "Doctor deleted successfully" });
+                 await _doctorService.DeleteDoctorAsync(id);
+
+                 return Ok(new { message = "Successfully deleted doctor" });
+               
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while deleting doctor from database.", details = ex.Message });
+            }
         }
     }
 }
