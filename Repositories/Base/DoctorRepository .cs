@@ -71,5 +71,10 @@ namespace Clinic_Complex_Management_System1.Repositories.Base
             _context.Doctors.Remove(doctor);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

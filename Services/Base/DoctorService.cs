@@ -28,70 +28,34 @@ namespace Clinic_Complex_Management_System1.Services.Base
             return result;
         }
 
-        public async Task<DoctorDto?> GetDoctorByIdAsync(int id)
+        public async Task<Doctor?> GetDoctorByIdAsync(int id)
         {
-            var doctor = await _repository.GetDoctorByIdAsync(id);
-            return doctor?.Adapt<DoctorDto>();
+           
+            return await _repository.GetDoctorByIdAsync(id);
         }
 
-        public async Task<string> AddDoctorAsync(CreateDoctorDto dto)
+        public async Task<bool> AddDoctorAsync(Doctor doctor)
         {
-            var doctor = dto.Adapt<Doctor>();
-            if (dto.Image is not null && dto.Image.Length > 0)
-            {
-                var filename = Guid.NewGuid().ToString() + Path.GetExtension(dto.Image.FileName);
-                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/doctor", filename);
-                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-                using var stream = File.Create(path);
-                await dto.Image.CopyToAsync(stream);
-                doctor.images = filename;
-            }
+          
             await _repository.AddDoctorAsync(doctor);
-            return "Doctor added successfully.";
+            return await _repository.SaveChangesAsync();
         }
 
-        public async Task<string> UpdateDoctorAsync(int id, UpdateDoctorDto dto)
+        public async Task<bool> UpdateDoctorAsync(Doctor doctor)
         {
-            var existing = await _repository.GetDoctorByIdAsync(id);
-            if (existing is null) return "Doctor not found.";
-
-            var doctor = dto.Adapt<Doctor>();
-            doctor.Id = id;
-
-            if (dto.Image is not null && dto.Image.Length > 0)
-            {
-                var filename = Guid.NewGuid().ToString() + Path.GetExtension(dto.Image.FileName);
-                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/doctor", filename);
-                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-                using var stream = File.Create(path);
-                await dto.Image.CopyToAsync(stream);
-
-                // delete old image
-                var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/doctor", existing.images ?? "");
-                if (File.Exists(oldPath)) File.Delete(oldPath);
-
-                doctor.images = filename;
-            }
-            else
-            {
-                doctor.images = existing.images;
-            }
-
-            await _repository.UpdateDoctorAsync(doctor);
-            return "Doctor updated successfully.";
+           
+          await  _repository.UpdateDoctorAsync(doctor);
+            return await _repository.SaveChangesAsync();
         }
 
-        public async Task<string> DeleteDoctorAsync(int id)
+        public async Task<bool> DeleteDoctorAsync(int id)
         {
-            var doctor = await _repository.GetDoctorByIdAsync(id);
-            if (doctor == null) return "Doctor not found.";
+         
+            var hospital = await _repository.GetDoctorByIdAsync(id);
+            if (hospital == null) return false;
 
-            // delete image
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/doctor", doctor.images ?? "");
-            if (File.Exists(path)) File.Delete(path);
-
-            await _repository.DeleteDoctorAsync(doctor);
-            return "Doctor deleted successfully.";
+           await _repository.DeleteDoctorAsync(hospital);
+            return await _repository.SaveChangesAsync();
         }
     }
 }
