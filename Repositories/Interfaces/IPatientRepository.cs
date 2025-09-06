@@ -4,8 +4,9 @@ public interface IPatientRepository
 {
     Task<IEnumerable<Patient>> GetAllAsync();
     Task<Patient?> GetByIdAsync(int id);
+    Task<int> GetPatientIdByUserIdAsync(Guid userId);
+
     Task AddAsync(Patient patient);
-    void Update(Patient patient);
-    void Remove(Patient patient);
-    Task<bool> SaveChangesAsync();
+    Task<bool> Update(Patient patient);
+    Task<bool> Remove(Patient patient);
 }

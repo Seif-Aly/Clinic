@@ -54,52 +54,121 @@ namespace Clinic_Complex_Management_System1
                 };
             });
 
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidIssuer = jwtIssuer,
-                        ValidateAudience = true,
-                        ValidAudience = jwtAudience,
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-                        NameClaimType = ClaimTypes.Name,
-                        RoleClaimType = ClaimTypes.Role
-                    };
-                });
+            //builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            //    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+            //    {
+            //        options.TokenValidationParameters = new TokenValidationParameters
+            //        {
+            //            ValidateIssuer = false,
+            //            ValidIssuer = jwtIssuer,
+            //            ValidateAudience = false,
+            //            ValidAudience = jwtAudience,
+            //            ValidateIssuerSigningKey = true,
+            //            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            //            NameClaimType = ClaimTypes.Name,
+            //            RoleClaimType = ClaimTypes.Role
+            //        };
+            //    });
+
+            //builder.Services.AddAuthorization();
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        NameClaimType = ClaimTypes.Name,
+        RoleClaimType = ClaimTypes.Role
+    };
+
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = ctx =>
+        {
+            Console.WriteLine("AUTH FAILED: " + ctx.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = ctx =>
+        {
+            Console.WriteLine("✅ TOKEN VALIDATED: " + ctx.Principal?.Identity?.Name);
+            return Task.CompletedTask;
+        },
+        OnMessageReceived = ctx =>
+        {
+            Console.WriteLine("🔍 JWT Received: " + ctx.Token);
+            return Task.CompletedTask;
+        },
+        OnChallenge = ctx =>
+        {
+            Console.WriteLine("CHALLENGE ERROR: " + ctx.ErrorDescription);
+            return Task.CompletedTask;
+        }
+    };
+});
 
             builder.Services.AddAuthorization();
 
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen(options =>
+            // Swagger w/ JWT
+            builder.Services.AddSwaggerGen(c =>
             {
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT",
-                    In = ParameterLocation.Header,
-                    Description = "Enter JWT token as: Bearer {your token}"
-                });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "BankingSystem API", Version = "v1" });
 
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                var jwtScheme = new OpenApiSecurityScheme
                 {
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Description = "JWT Bearer token",
+                    Reference = new OpenApiReference
                     {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        Array.Empty<string>()
+                        Id = JwtBearerDefaults.AuthenticationScheme,
+                        Type = ReferenceType.SecurityScheme
                     }
-                });
+                };
+                c.AddSecurityDefinition(jwtScheme.Reference.Id, jwtScheme);
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement { { jwtScheme, Array.Empty<string>() } });
             });
+
+            //builder.Services.AddSwaggerGen(options =>
+            //{
+            //    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            //    {
+            //        Name = "Authorization",
+            //        Type = SecuritySchemeType.Http,
+            //        Scheme = "Bearer",
+            //        BearerFormat = "JWT",
+            //        In = ParameterLocation.Header,
+            //        Description = "Enter JWT token as: Bearer {your token}"
+            //    });
+
+            //    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            //    {
+            //        {
+            //            new OpenApiSecurityScheme
+            //            {
+            //                Reference = new OpenApiReference
+            //                {
+            //                    Type = ReferenceType.SecurityScheme,
+            //                    Id = "Bearer"
+            //                }
+            //            },
+            //            Array.Empty<string>()
+            //        }
+            //    });
+            //});
 
             // Single, clear CORS policy for React app
             builder.Services.AddCors(options =>
@@ -148,11 +217,13 @@ namespace Clinic_Complex_Management_System1
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Clinic API V1");
                 });
             }
+            app.UseHttpsRedirection();
+            app.UseRouting();
+            // app.UseHttpsRedirection();
 
-           // app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            
+
             app.UseCors("AllowReactApp");
 
             app.UseAuthentication();

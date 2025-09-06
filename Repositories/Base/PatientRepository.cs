@@ -20,24 +20,29 @@ public class PatientRepository : IPatientRepository
     {
         return await _context.Patients.FindAsync(id);
     }
+    public async Task<int> GetPatientIdByUserIdAsync(Guid userId)
+    {
+        var patient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == userId);
+        return patient?.Id ?? 0;
+    }
 
     public async Task AddAsync(Patient patient)
     {
         await _context.Patients.AddAsync(patient);
+        await _context.SaveChangesAsync();
     }
 
-    public void Update(Patient patient)
+    public async Task<bool> Update(Patient patient)
     {
         _context.Patients.Update(patient);
-    }
-
-    public void Remove(Patient patient)
-    {
-        _context.Patients.Remove(patient);
-    }
-
-    public async Task<bool> SaveChangesAsync()
-    {
         return (await _context.SaveChangesAsync()) > 0;
     }
+
+    public async Task<bool> Remove(Patient patient)
+    {
+        _context.Patients.Remove(patient);
+        return (await _context.SaveChangesAsync()) > 0;
+    }
+
+
 }

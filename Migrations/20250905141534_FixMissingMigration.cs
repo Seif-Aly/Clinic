@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Clinic_Complex_Management_System1.Migrations
 {
     /// <inheritdoc />
-    public partial class update : Migration
+    public partial class FixMissingMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -14,14 +15,18 @@ namespace Clinic_Complex_Management_System1.Migrations
                 name: "FK_Appointments_Patients_PatientId",
                 table: "Appointments");
 
+            migrationBuilder.DropColumn(
+                name: "Role",
+                table: "AspNetUsers");
+
             migrationBuilder.AlterColumn<int>(
                 name: "PatientId",
                 table: "Appointments",
-                type: "INTEGER",
+                type: "int",
                 nullable: false,
                 defaultValue: 0,
                 oldClrType: typeof(int),
-                oldType: "INTEGER",
+                oldType: "int",
                 oldNullable: true);
 
             migrationBuilder.AddForeignKey(
@@ -40,13 +45,27 @@ namespace Clinic_Complex_Management_System1.Migrations
                 name: "FK_Appointments_Patients_PatientId",
                 table: "Appointments");
 
+            migrationBuilder.AddColumn<string>(
+                name: "Role",
+                table: "AspNetUsers",
+                type: "nvarchar(max)",
+                nullable: false,
+                defaultValue: "");
+
             migrationBuilder.AlterColumn<int>(
                 name: "PatientId",
                 table: "Appointments",
-                type: "INTEGER",
+                type: "int",
                 nullable: true,
                 oldClrType: typeof(int),
-                oldType: "INTEGER");
+                oldType: "int");
+
+            migrationBuilder.UpdateData(
+                table: "AspNetUsers",
+                keyColumn: "Id",
+                keyValue: new Guid("efd76860-e9b8-4a2e-a008-4d0bd4b6bf34"),
+                column: "Role",
+                value: "User");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Appointments_Patients_PatientId",

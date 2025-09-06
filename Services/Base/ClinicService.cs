@@ -1,5 +1,7 @@
-﻿using Clinic_Complex_Management_System.DTos.Request;
+﻿using AutoMapper;
+using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System.DTOs.Clinic;
+using Clinic_Complex_Management_System1.DTOs.Doctor;
 using Clinic_Complex_Management_System1.Models;
 using Clinic_Complex_Management_System1.Repositories.Interfaces;
 using Clinic_Complex_Management_System1.Services.Interfaces;
@@ -10,19 +12,28 @@ namespace Clinic_Complex_Management_System1.Services.Base
     public class ClinicService : IClinicService
     {
         private readonly IClinicRepository _repository;
+        private readonly IMapper _mapper;
 
-        public ClinicService(IClinicRepository repository)
+        public ClinicService(IClinicRepository repository,
+            IMapper mapper
+            )
         {
             _repository = repository;
+            _mapper = mapper;
         }
 
-        public async Task<(List<ClinicDto>, int)> GetClinicsAsync(ClinicFilterRequest? filter, int page)
+        public async Task<GetClinicsResult> GetClinicsAsync(ClinicFilterRequest? filter, int page)
         {
+
             int pageSize = 6;
             var clinics = await _repository.GetClinicsAsync(filter?.NameClinic, filter?.NmaeHospitale, filter?.specialization, page, pageSize);
             var totalCount = await _repository.GetClinicCountAsync(filter?.NameClinic, filter?.NmaeHospitale, filter?.specialization);
-            var dtos = clinics.Adapt<List<ClinicDto>>();
-            return (dtos, totalCount);
+            var result = new GetClinicsResult
+            {
+                Clinics = _mapper.Map<List<ClinicDto>>(clinics),
+                TotalCount = totalCount
+            };
+            return result;
         }
 
         public async Task<ClinicDto?> GetClinicByIdAsync(int id)
@@ -53,9 +64,9 @@ namespace Clinic_Complex_Management_System1.Services.Base
             var existingClinic = await _repository.GetClinicByIdAsync(id);
             if (existingClinic == null)
                 return "Clinic not found.";
-
-            var updatedClinic = dto.Adapt<Clinic>();
-            updatedClinic.Id = id;
+            existingClinic.Name = dto.Name ?? existingClinic.Name;
+            existingClinic.Specialization = dto.Specialization ?? existingClinic.Specialization;
+            existingClinic.HospitalId = dto.HospitalId != 0 ? dto.HospitalId : existingClinic.HospitalId;
 
             if (dto.Image != null && dto.Image.Length > 0)
             {
@@ -72,14 +83,14 @@ namespace Clinic_Complex_Management_System1.Services.Base
                     if (File.Exists(oldFile)) File.Delete(oldFile);
                 }
 
-                updatedClinic.Image = filename;
+                existingClinic.Image = filename;
             }
             else
             {
-                updatedClinic.Image = existingClinic.Image;
+                existingClinic.Image = existingClinic.Image;
             }
 
-            await _repository.UpdateClinicAsync(updatedClinic);
+            await _repository.UpdateClinicAsync(existingClinic);
             return "Clinic updated successfully.";
         }
 

@@ -7,9 +7,12 @@ namespace Clinic_Complex_Management_System1.Services.Interfaces
     public interface IDoctorService
     {
         Task<GetDoctorsResult> GetDoctorsAsync(DoctorFilterRequest? filter, int page);
-        Task<Doctor?> GetDoctorByIdAsync(int id);
+        Task<DoctorDto?> GetDoctorByIdAsync(int id);
+        Task<int> GetDoctorIdByUserIdAsync(Guid userId);
+
         Task<bool> DeleteDoctorAsync(int id);
-        Task<bool> AddDoctorAsync(Doctor doctors);
-        Task<bool> UpdateDoctorAsync(Doctor doctorInDb);
+        Task<DoctorDto> AddDoctorAsync(CreateDoctorDto doctor);
+        Task<bool> UpdateDoctorAsync(UpdateDoctorDto doctor, int doctorId);
+        Task UpdateDoctorAsync(Doctor doctorInDb);
     }
 }

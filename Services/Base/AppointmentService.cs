@@ -2,6 +2,7 @@
 using Clinic_Complex_Management_System.Data;
 using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System.DTOs.Appointment;
+using Clinic_Complex_Management_System1.DTOs.Appointment;
 using Clinic_Complex_Management_System1.Models;
 using Clinic_Complex_Management_System1.Repositories.Interfaces;
 using Clinic_Complex_Management_System1.Services.Interfaces;
@@ -22,12 +23,17 @@ namespace Clinic_Complex_Management_System1.Services.Base
             _context = context;
         }
 
-        public async Task<(IEnumerable<AppointmentDto>, int totalPages)> GetAppointments(AppointmantFilterReqest? filter, string role, int? doctorId, int? patientId, int page)
+        public async Task<GetAppointmentsResult> GetAppointments(AppointmantFilterReqest? filter, string role, int? doctorId, int? patientId, int page)
         {
             var totalCount = await _repository.CountFilteredAppointmentsAsync(filter, role, doctorId, patientId);
             var data = await _repository.GetFilteredAppointmentsAsync(filter, role, doctorId, patientId, page);
             var dtoList = _mapper.Map<IEnumerable<AppointmentDto>>(data);
-            return (dtoList, (int)Math.Ceiling(totalCount / 6.0));
+            var result = new GetAppointmentsResult()
+            {
+                Appointments = dtoList.ToList(),
+                TotalCount = (int)Math.Ceiling(totalCount / 6.0)
+            };
+            return result;
         }
 
         public async Task<AppointmentDto?> GetAppointment(int id, string role, int? doctorId, int? patientId)
@@ -42,9 +48,20 @@ namespace Clinic_Complex_Management_System1.Services.Base
             return _mapper.Map<AppointmentDto>(appointment);
         }
 
-        public async Task<AppointmentDto?> CreateAppointment(CreateAppointmentDto dto, string role, int? doctorId)
+        public async Task<AppointmentDto?> CreateAppointment(CreateAppointmentDto dto, string role, int? doctorId, int? patientId)
         {
-            if (role == "Doctor" && dto.DoctorId != doctorId) return null;
+            if (role == "Doctor")
+            {
+                if (doctorId == null)
+                    return null;
+                dto.DoctorId = doctorId;
+            }
+            if (role == "Patient")
+            {
+                if (patientId == null)
+                    return null;
+                dto.PatientId = patientId;
+            }
 
             if (!await _context.Patients.AnyAsync(p => p.Id == dto.PatientId) ||
                 !await _context.Doctors.AnyAsync(d => d.Id == dto.DoctorId))
@@ -61,15 +78,28 @@ namespace Clinic_Complex_Management_System1.Services.Base
             return _mapper.Map<AppointmentDto>(saved);
         }
 
-        public async Task<bool> UpdateAppointment(UpdateAppointmentDto dto)
+        public async Task<bool> UpdateAppointment(int id, UpdateAppointmentDto dto, string role, int? doctorId, int? patientId)
         {
-            var appointment = await _repository.GetByIdAsync(dto.Id);
+            var appointment = await _repository.GetByIdAsync(id);
             if (appointment == null) return false;
-
-            appointment.Status = dto.Status;
-            appointment.AppointmentDateTime = dto.AppointmentDateTime;
-            appointment.DoctorId = dto.DoctorId;
-            appointment.PatientId = dto.PatientId;
+            if (role == "Doctor")
+            {
+                if (doctorId == null)
+                    return false;
+                if (appointment.DoctorId != doctorId)
+                    return false;
+            }
+            if (role == "Patient")
+            {
+                if (patientId == null)
+                    return false;
+                if (appointment.PatientId != patientId)
+                    return false;
+            }
+            appointment.Status = dto.Status ?? appointment.Status;
+            appointment.AppointmentDateTime = dto.AppointmentDateTime.HasValue ? dto.AppointmentDateTime.Value : appointment.AppointmentDateTime;
+            appointment.DoctorId = dto.DoctorId ?? appointment.DoctorId;
+            appointment.PatientId = dto.PatientId.HasValue ? dto.PatientId.Value : appointment.PatientId;
 
             await _repository.UpdateAsync(appointment);
             return true;

@@ -10,4 +10,9 @@
         public string? Gender { get; set; }
         public DateTime DateOfBirth { get; set; }
     }
+    public class RegisterPatientResult : PatientDto
+    {
+        public string? Password { get; set; }
+
+    }
 }

@@ -6,7 +6,19 @@
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? Specialization { get; set; }
-        public int ClinicId { get; set; }
+        public int? ClinicId { get; set; }
+        public Guid? UserId { get; set; }
+
+        public IFormFile? Image { get; set; }
+    }
+    public class RegisterDoctorDto
+    {
+        public string? Password { get; set; }
+        public string? FullName { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? Specialization { get; set; }
+        public int? ClinicId { get; set; }
         public IFormFile? Image { get; set; }
     }
 }

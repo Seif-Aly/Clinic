@@ -55,7 +55,7 @@ namespace Clinic_Complex_Management_System1.Repositories.Base
 
         public async Task UpdateDoctorAsync(Doctor doctor)
         {
-           var existing = await _context.Doctors.FindAsync(doctor.Id);
+            var existing = await _context.Doctors.FindAsync(doctor.Id);
             if (existing != null)
             {
                 _context.Entry(existing).State = EntityState.Detached;
@@ -75,6 +75,12 @@ namespace Clinic_Complex_Management_System1.Repositories.Base
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<int> GetDoctorIdByUserIdAsync(Guid userId)
+        {
+            var doctor = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+            return doctor != null ? doctor.Id : 0;
         }
     }
 }

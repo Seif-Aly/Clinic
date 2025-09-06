@@ -8,9 +8,8 @@ namespace Clinic_Complex_Management_System1.Repositories.Interfaces
         Task<IEnumerable<Hospital>> GetHospitalsAsync(HospitaliFilterRequest? filter, int page);
         Task<Hospital?> GetHospitalByIdAsync(int id);
         Task AddHospitalAsync(Hospital hospital);
-        void UpdateHospital(Hospital hospital);
-        void DeleteHospital(Hospital hospital);
-        Task<bool> SaveChangesAsync();
+        Task<int> UpdateHospital(Hospital hospital);
+        Task<int> DeleteHospital(Hospital hospital);
         Task<int> GetTotalCountAsync(HospitaliFilterRequest? filter);
     }
 

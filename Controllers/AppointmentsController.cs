@@ -9,6 +9,7 @@ namespace Clinic_Complex_Management_System1.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AppointmentsController : ControllerBase
     {
         private readonly IAppointmentService _appointmentService;
@@ -27,7 +28,7 @@ namespace Clinic_Complex_Management_System1.Controllers
         {
             try
             {
-                var (appointments, totalPages) = await _appointmentService.GetAppointments(
+                var result = await _appointmentService.GetAppointments(
                     appointmantFilterRequest,
                     CurrentRole!,
                     CurrentDoctorId,
@@ -35,19 +36,19 @@ namespace Clinic_Complex_Management_System1.Controllers
                     page
                 );
 
-                if (!appointments.Any())
-                    return BadRequest(new { message = "No clinics found matching your criteria ID." });
+                if (!result.Appointments.Any())
+                    return BadRequest(new { message = "No Appoinments found matching your criteria ID." });
 
                 return Ok(new
                 {
-                    Pagination = new { TotalNumberOfPage = totalPages, CurrentPage = page },
+                    Pagination = new { TotalNumberOfPage = result.TotalCount, CurrentPage = page },
                     Returne = new
                     {
                         nameDoctor = appointmantFilterRequest?.NameDoctor,
                         specialization = appointmantFilterRequest?.Specialization,
                         Status = appointmantFilterRequest?.status,
                         dateTime = appointmantFilterRequest?.date,
-                        appointmant = appointments
+                        appointmant = result.Appointments
                     }
                 });
             }
@@ -83,11 +84,11 @@ namespace Clinic_Complex_Management_System1.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateAppointment([FromBody] CreateAppointmentDto dto)
+        public async Task<IActionResult> CreateAppointment([FromForm] CreateAppointmentDto dto)
         {
             try
             {
-                var result = await _appointmentService.CreateAppointment(dto, CurrentRole!, CurrentDoctorId);
+                var result = await _appointmentService.CreateAppointment(dto, CurrentRole!, CurrentDoctorId, CurrentPatientId);
                 if (result == null)
                     return BadRequest(new { message = "Doctor or Patient not found, or no access." });
 
@@ -100,12 +101,10 @@ namespace Clinic_Complex_Management_System1.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAppointment(int id, UpdateAppointmentDto appointmentDto)
+        public async Task<IActionResult> UpdateAppointment(int id, [FromForm] UpdateAppointmentDto appointmentDto)
         {
-            if (id != appointmentDto.Id)
-                return BadRequest(new { message = "Appointment ID mismatch" });
 
-            var success = await _appointmentService.UpdateAppointment(appointmentDto);
+            var success = await _appointmentService.UpdateAppointment(id, appointmentDto, CurrentRole!, CurrentDoctorId, CurrentPatientId);
             if (!success)
                 return NotFound(new { message = "Appointment not found." });
 

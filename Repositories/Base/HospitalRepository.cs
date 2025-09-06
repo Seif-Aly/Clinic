@@ -35,21 +35,20 @@ public class HospitalRepository : IHospitalRepository
     public async Task AddHospitalAsync(Hospital hospital)
     {
         await _context.Hospitals.AddAsync(hospital);
+        await _context.SaveChangesAsync();
     }
 
-    public void UpdateHospital(Hospital hospital)
+    public async Task<int> UpdateHospital(Hospital hospital)
     {
         _context.Hospitals.Update(hospital);
+        return await _context.SaveChangesAsync();
     }
 
-    public void DeleteHospital(Hospital hospital)
+    public async Task<int> DeleteHospital(Hospital hospital)
     {
         _context.Hospitals.Remove(hospital);
-    }
+        return await _context.SaveChangesAsync();
 
-    public async Task<bool> SaveChangesAsync()
-    {
-        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<int> GetTotalCountAsync(HospitaliFilterRequest? filter)

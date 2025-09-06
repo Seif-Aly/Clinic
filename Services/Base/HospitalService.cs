@@ -39,13 +39,13 @@ namespace Clinic_Complex_Management_System1.Services.Base
         public async Task<bool> AddHospitalAsync(Hospital hospital)
         {
             await _repository.AddHospitalAsync(hospital);
-            return await _repository.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> UpdateHospitalAsync(Hospital hospital)
         {
-            _repository.UpdateHospital(hospital);
-            return await _repository.SaveChangesAsync();
+            await _repository.UpdateHospital(hospital);
+            return true;
         }
 
         public async Task<bool> DeleteHospitalAsync(int id)
@@ -53,8 +53,44 @@ namespace Clinic_Complex_Management_System1.Services.Base
             var hospital = await _repository.GetHospitalByIdAsync(id);
             if (hospital == null) return false;
 
-            _repository.DeleteHospital(hospital);
-            return await _repository.SaveChangesAsync();
+            await _repository.DeleteHospital(hospital);
+            return true;
+        }
+
+        public async Task<string> UpdateHospitalAsync(UpdateHospitalDto dto, int id)
+        {
+            var existingHospital = await _repository.GetHospitalByIdAsync(id);
+            if (existingHospital == null)
+                return "Hospital not found.";
+
+            existingHospital.Name = dto.Name ?? existingHospital.Name;
+            existingHospital.Address = dto.Address ?? existingHospital.Address;
+            existingHospital.Phone = dto.Phone ?? existingHospital.Phone;
+
+            if (dto.Image != null && dto.Image.Length > 0)
+            {
+                var filename = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
+                var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/hospital", filename);
+                using (var stream = File.Create(filepath))
+                {
+                    await dto.Image.CopyToAsync(stream);
+                }
+
+                if (!string.IsNullOrEmpty(existingHospital.Image))
+                {
+                    var oldFile = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/hospital", existingHospital.Image);
+                    if (File.Exists(oldFile)) File.Delete(oldFile);
+                }
+
+                existingHospital.Image = filename;
+            }
+            else
+            {
+                existingHospital.Image = existingHospital.Image;
+            }
+
+            await _repository.UpdateHospital(existingHospital);
+            return "Hospital updated successfully.";
         }
     }
 

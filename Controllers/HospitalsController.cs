@@ -4,11 +4,12 @@ using Clinic_Complex_Management_System.DTOs.Hospital;
 using Clinic_Complex_Management_System1.Models;
 using Clinic_Complex_Management_System1.Services.Interfaces;
 using Mapster;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [Route("api/[controller]")]
 [ApiController]
-//[Authorize(Roles = "Admin")]
+[Authorize]
 public class HospitalsController : ControllerBase
 {
     private readonly IHospitalService _hospitalService;
@@ -70,57 +71,18 @@ public class HospitalsController : ControllerBase
     }
 
     [HttpPut("PutHospital/{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> PutHospital(int id, [FromForm] UpdateHospitalDto updateHospitalDto)
     {
-        try
-        {
-            var hospitalInDb = await _hospitalService.GetHospitalByIdAsync(id);
-            if (hospitalInDb == null)
-                return NotFound(new { message = "No hospitals found matching this ID." });
-
-            hospitalInDb.Name = updateHospitalDto.Name;
-            hospitalInDb.Address = updateHospitalDto.Address;
-            hospitalInDb.Phone = updateHospitalDto.Phone;
-
-
-            // التعامل مع الصورة
-            if (updateHospitalDto.Image != null && updateHospitalDto.Image.Length > 0)
-            {
-                var filename = Guid.NewGuid().ToString() + Path.GetExtension(updateHospitalDto.Image.FileName);
-                var filepath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", filename);
-                using (var stream = System.IO.File.Create(filepath))
-                {
-                    await updateHospitalDto.Image.CopyToAsync(stream);
-                }
-
-                // حذف الصورة القديمة
-                var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\images\\Hospital", hospitalInDb.Image);
-                if (System.IO.File.Exists(oldFilePath))
-                {
-                    System.IO.File.Delete(oldFilePath);
-                }
-
-                hospitalInDb.Image = filename; // نخزن اسم الملف مش المسار الكامل
-            }
-            else
-            {
-                hospitalInDb.Image = hospitalInDb.Image;
-            }
-
-            bool updated = await _hospitalService.UpdateHospitalAsync(hospitalInDb);
-
-            if (updated)
-                return Ok(new { message = "Successfully updated hospital" });
-            else
-                return StatusCode(500, new { error = "Failed to update hospital" });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { error = "An error occurred while processing your request.", details = ex.Message });
-        }
+        var result = await _hospitalService.UpdateHospitalAsync(updateHospitalDto, id);
+        if (result != null)
+            return Ok(new { message = "Successfully updated hospital" });
+        else
+            return StatusCode(500, new { error = "Failed to update hospital" });
     }
 
     [HttpPost("PostHospital")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> PostHospital([FromForm] CreateHospitalDto createHospitalDto)
     {
         var hospital = createHospitalDto.Adapt<Hospital>();
@@ -158,6 +120,8 @@ public class HospitalsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
+
     public async Task<IActionResult> DeleteHospital(int id)
     {
         try

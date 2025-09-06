@@ -1,4 +1,5 @@
 ﻿using Clinic_Complex_Management_System.DTos.Request;
+using Clinic_Complex_Management_System.DTOs.Hospital;
 using Clinic_Complex_Management_System1.DTOs.Hospital;
 using Clinic_Complex_Management_System1.Models;
 
@@ -10,6 +11,7 @@ namespace Clinic_Complex_Management_System1.Services.Interfaces
         Task<Hospital?> GetHospitalByIdAsync(int id);
         Task<bool> AddHospitalAsync(Hospital hospital);
         Task<bool> UpdateHospitalAsync(Hospital hospital);
+        Task<string> UpdateHospitalAsync(UpdateHospitalDto hospitaldto, int id);
         Task<bool> DeleteHospitalAsync(int id);
     }
 

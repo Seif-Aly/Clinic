@@ -11,4 +11,9 @@
 
         public string? ClinicName { get; set; } // from clinic
     }
+    public class RegisterDoctorResult : DoctorDto
+    {
+        public string? Password { get; set; }
+
+    }
 }

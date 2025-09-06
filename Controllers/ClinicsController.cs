@@ -1,6 +1,7 @@
 ﻿using Clinic_Complex_Management_System.DTos.Request;
 using Clinic_Complex_Management_System.DTOs.Clinic;
 using Clinic_Complex_Management_System1.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Clinic_Complex_Management_System.Controllers
@@ -23,13 +24,13 @@ namespace Clinic_Complex_Management_System.Controllers
             {
                 if (page < 1) page = 1;
 
-                var (clinics, totalCount) = await _clinicService.GetClinicsAsync(filter, page);
-                if (clinics == null || clinics.Count == 0)
+                var result = await _clinicService.GetClinicsAsync(filter, page);
+                if (result == null || result.TotalCount == 0)
                     return NotFound(new { message = "No clinics found matching the criteria." });
 
                 var pagination = new
                 {
-                    TotalNumberOfPages = Math.Ceiling(totalCount / 6.0),
+                    TotalNumberOfPages = Math.Ceiling(result.TotalCount / 6.0),
                     CurrentPage = page
                 };
 
@@ -38,7 +39,7 @@ namespace Clinic_Complex_Management_System.Controllers
                     nameclinic = filter?.NameClinic,
                     namehospital = filter?.NmaeHospitale,
                     spescialization = filter?.specialization,
-                    clinic = clinics
+                    clinic = result.Clinics
                 };
 
                 return Ok(new { pagination, returns });
@@ -67,6 +68,7 @@ namespace Clinic_Complex_Management_System.Controllers
         }
 
         [HttpPost("PostClinic")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PostClinic([FromForm] CreateClinicDto dto)
         {
             try
@@ -81,6 +83,7 @@ namespace Clinic_Complex_Management_System.Controllers
         }
 
         [HttpPut("PutClinic/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PutClinic(int id, [FromForm] UpdateClinicDto dto)
         {
             try
@@ -98,6 +101,7 @@ namespace Clinic_Complex_Management_System.Controllers
         }
 
         [HttpDelete("DeleteClinic/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteClinic(int id)
         {
             try

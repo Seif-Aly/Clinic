@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Clinic_Complex_Management_System.DTos.Request;
+using Clinic_Complex_Management_System.DTOs.Patient;
 using Clinic_Complex_Management_System1.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Clinic_Complex_Management_System.Controllers
@@ -57,23 +57,21 @@ namespace Clinic_Complex_Management_System.Controllers
             return Ok(patient);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<Patient>> PostPatient(Patient patient)
-        {
-            var created = await _patientService.CreatePatientAsync(patient);
-            if (!created)
-                return StatusCode(500, new { message = "Failed to save patient. Database error." });
+        //[HttpPost]
+        //public async Task<ActionResult<Patient>> PostPatient(CreatePatientDto patient)
+        //{
+        //    var created = await _patientService.CreatePatientAsync(patient);
+        //    if (created == null)
+        //        return StatusCode(500, new { message = "Failed to save patient. Database error." });
 
-            return CreatedAtAction(nameof(GetPatient), new { id = patient.Id }, patient);
-        }
+        //    return CreatedAtAction(nameof(GetPatient), new { id = created }, patient);
+        //}
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPatient(int id, Patient patient)
+        public async Task<IActionResult> PutPatient(int id, [FromForm] UpdatePatientDto patientDto)
         {
-            if (id != patient.Id)
-                return BadRequest(new { message = "ID mismatch." });
 
-            var updated = await _patientService.UpdatePatientAsync(patient);
+            var updated = await _patientService.UpdatePatientAsync(patientDto, id);
             if (!updated)
                 return StatusCode(500, new { message = "Failed to update patient. Database error." });
 

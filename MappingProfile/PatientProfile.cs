@@ -8,9 +8,11 @@ namespace Clinic_Complex_Management_System.MappingProfile
     {
         public PatientProfile()
         {
-            CreateMap<Patient, PatientDto>();
-            CreateMap<CreatePatientDto, Patient>();
-            CreateMap<UpdatePatientDto, Patient>();
+            CreateMap<Patient, PatientDto>().ReverseMap();
+            CreateMap<Patient, RegisterPatientResult>()
+               .ReverseMap();
+            CreateMap<CreatePatientDto, Patient>().ReverseMap();
+            CreateMap<UpdatePatientDto, Patient>().ReverseMap();
         }
     }
 }

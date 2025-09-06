@@ -11,7 +11,13 @@ namespace Clinic_Complex_Management_System.MappingProfiles
             // Doctor => DoctorDto
             CreateMap<Doctor, DoctorDto>()
                 .ForMember(dest => dest.ClinicName, opt => opt.MapFrom(src => src.Clinic != null ? src.Clinic.Name : null))
+                .ForMember(dest => dest.Image, opt => opt.MapFrom(src => src.images))
                 .ReverseMap();
+
+            CreateMap<Doctor, RegisterDoctorResult>()
+               .ForMember(dest => dest.ClinicName, opt => opt.MapFrom(src => src.Clinic != null ? src.Clinic.Name : null))
+               .ForMember(dest => dest.Image, opt => opt.MapFrom(src => src.images))
+               .ReverseMap();
 
             // CreateDoctorDto => Doctor
             CreateMap<CreateDoctorDto, Doctor>().ReverseMap();
