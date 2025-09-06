@@ -17,10 +17,13 @@ namespace Clinic_Complex_Management_System.Data
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Prescription> Prescriptions { get; set; }
         public DbSet<PrescriptionItem> PrescriptionItems { get; set; }
-        public DbSet<User> Users { get; set; }
+        public DbSet<Profileuser> profileusers { get; set; }
+       
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+         
 
             modelBuilder.Entity<Hospital>()
                 .HasMany(h => h.Clinics)
@@ -102,6 +105,11 @@ namespace Clinic_Complex_Management_System.Data
                     RoleId = adminRoleId
                 }
             );
+            // one to one
+            modelBuilder.Entity<User>()
+              .HasOne<Profileuser>()
+              .WithOne(p => p.User)
+             .HasForeignKey<Profileuser>(p => p.UserId);
         }
     }
 }

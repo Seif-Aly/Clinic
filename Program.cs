@@ -127,6 +127,7 @@ namespace Clinic_Complex_Management_System1
             builder.Services.AddScoped<IPrescriptionItemService, PrescriptionItemService>();
             builder.Services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
             builder.Services.AddScoped<IPrescriptionService, PrescriptionService>();
+            builder.Services.AddScoped<IProfileUserRepository, ProfileUserRepository>();
 
             var app = builder.Build();
 
