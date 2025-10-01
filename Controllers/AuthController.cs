@@ -133,7 +133,8 @@ public class AuthController : ControllerBase
         {
             UserName = dto.Email.Trim().ToLower(),
             Email = dto.Email.Trim().ToLower(),
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            Role = "Patient"
         };
         var create = await _userManager.CreateAsync(user, dto.Password);
         if (!create.Succeeded)
@@ -181,7 +182,8 @@ public class AuthController : ControllerBase
         {
             UserName = dto.Email.Trim().ToLower(),
             Email = dto.Email.Trim().ToLower(),
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            Role = "Admin"
         };
         var create = await _userManager.CreateAsync(user, dto.Password);
         if (!create.Succeeded)
@@ -212,7 +214,8 @@ public class AuthController : ControllerBase
         {
             UserName = dto.Email.Trim().ToLower(),
             Email = dto.Email.Trim().ToLower(),
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            Role = "Doctor"
         };
         var create = await _userManager.CreateAsync(user, dto.Password);
         if (!create.Succeeded)

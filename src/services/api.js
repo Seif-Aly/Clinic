@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const base = (
-  process.env.REACT_APP_API_BASE || "http://localhost:5048/api"
+  process.env.REACT_APP_API_BASE || "http://localhost:5055/api"
 ).replace(/\/$/, "");
 
 const api = axios.create({

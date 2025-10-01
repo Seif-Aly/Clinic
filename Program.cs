@@ -32,7 +32,10 @@ namespace Clinic_Complex_Management_System1
 
             // SQLITE in dev
             builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+            
+            // builder.Services.AddDbContext<AppDbContext>(options =>
+            // options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
             builder.Services.AddIdentity<User, IdentityRole<Guid>>()
@@ -175,7 +178,7 @@ namespace Clinic_Complex_Management_System1
             {
                 options.AddPolicy("AllowReactApp", policy =>
                 {
-                    policy.WithOrigins("http://localhost:3000")
+                    policy.WithOrigins("http://localhost:3000","http://localhost:3001" )
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();

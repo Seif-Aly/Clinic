@@ -149,7 +149,7 @@ export default function Home() {
               </h1>
               <p className="text-muted mb-4">
                 Browse doctors across hospitals & clinics. Filter by
-                specialization and location.
+                specialization and doctor name.
               </p>
               <div className="d-flex gap-3 flex-wrap">
                 <div className="badge bg-primary-subtle text-primary px-3 py-2">

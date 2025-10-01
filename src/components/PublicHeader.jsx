@@ -34,9 +34,9 @@ export default function PublicHeader() {
             <a className="btn btn-primary" href="/login">
               Admin/Doctor
             </a>
-                      <a className="btn btn-outline-secondary" href="/profile">
-                          User Profile
-                      </a>
+            <a className="btn btn-outline-secondary" href="/profile">
+              User Profile
+            </a>
           </>
         )}
 
@@ -45,10 +45,10 @@ export default function PublicHeader() {
             <span className="me-2">Welcome, {user.email}</span>
             <a className="btn btn-outline-info" href="/my-appointments">
               My Appointments
-                      </a>
-                      <a className="btn btn-outline-secondary" href="/profile">
-                          User Profile
-                      </a>
+            </a>
+            <a className="btn btn-outline-secondary" href="/profile">
+              User Profile
+            </a>
             <button className="btn btn-outline-danger" onClick={logout}>
               Logout
             </button>
@@ -61,8 +61,8 @@ export default function PublicHeader() {
               <span className="me-2">Welcome, {user.email}</span>
               <a className="btn btn-primary" href="/dashboard">
                 Dashboard
-                      </a>
-                      
+              </a>
+
               <button className="btn btn-outline-danger" onClick={logout}>
                 Logout
               </button>

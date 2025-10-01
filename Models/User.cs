@@ -17,8 +17,7 @@ namespace Clinic_Complex_Management_System1.Models
 
         // [Required]
         // public string PasswordHash { get; set; }
-
-        //public string Role { get; set; } = "User";
+        public string Role { get; set; } = "User";
 
 
     }

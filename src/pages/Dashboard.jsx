@@ -17,10 +17,10 @@ export default function Dashboard() {
     const load = async () => {
       setErrors([]);
       try {
-        const [dRes, pRes, aRes, hRes] = await Promise.all([
+        const [dRes, pRes, hRes] = await Promise.all([
           api.get("/doctors/Getdoctors"),
           api.get("/patients/GetPatients"),
-          api.get("/appointments/GetAppointments"),
+          // api.get("/appointments/GetAppointments"),
           api.get("/hospitals/GetHospitals"),
         ]);
 
@@ -46,23 +46,23 @@ export default function Dashboard() {
         setStats({
           doctors: getCount(dRes.data),
           patients: getCount(pRes.data),
-          appointments: getCount(aRes.data),
+          // appointments: getCount(aRes.data),
           hospitals: getCount(hRes.data),
         });
 
         console.log("Doctors data:", dRes.data);
         console.log("Patients data:", pRes.data);
-        console.log("Appointments data:", aRes.data);
+        // console.log("Appointments data:", aRes.data);
         console.log("Hospitals data:", hRes.data);
 
-        const apps = Array.isArray(aRes.data)
-          ? aRes.data.slice(-5).reverse()
-          : [];
+        // const apps = Array.isArray(aRes.data)
+        //   ? aRes.data.slice(-5).reverse()
+        //   : [];
         const pats = Array.isArray(pRes.data)
           ? pRes.data.slice(-5).reverse()
           : [];
 
-        setLatestAppointments(apps);
+        // setLatestAppointments(apps);
         setLatestPatients(pats);
       } catch (err) {
         setErrors(extractErrorMessages(err));
@@ -93,7 +93,8 @@ export default function Dashboard() {
         <div className="col-md-3">
           <div className="card p-3 text-center card-small bg-warning text-white">
             <div>Appointments</div>
-            <h3>{stats.appointments}</h3>
+            <h3>0</h3>
+            {/* <h3>{stats.appointments}</h3> */}
           </div>
         </div>
         <div className="col-md-3">
