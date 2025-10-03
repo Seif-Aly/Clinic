@@ -8,7 +8,6 @@ namespace Clinic_Complex_Management_System.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class DoctorsController : ControllerBase
     {
         private readonly IDoctorService _doctorService;
@@ -27,11 +26,11 @@ namespace Clinic_Complex_Management_System.Controllers
 
                 var result = await _doctorService.GetDoctorsAsync(doctorFilterRequest, page);
                 if (result == null || result.TotalCount == 0)
-                    return NotFound(new { message = "No clinics found matching the criteria." });
+                    return NotFound(new { message = "No doctors found matching the criteria." });
 
                 var pagination = new
                 {
-                    TotalNumberOfPages = Math.Ceiling(result.TotalCount / 6.0),
+                    TotalNumberOfPages = Math.Ceiling(result.TotalCount / 20.0),
                     CurrentPage = page
                 };
 
@@ -43,7 +42,8 @@ namespace Clinic_Complex_Management_System.Controllers
                     doctor = result.Doctors
                 };
 
-                return Ok(new { pagination, returns });
+                // return Ok(new { pagination, returns });
+                return Ok(new { doctors = result.Doctors, pagination });
             }
             catch (Exception ex)
             {
@@ -58,14 +58,13 @@ namespace Clinic_Complex_Management_System.Controllers
             return doctor != null ? Ok(doctor) : NotFound(new { message = "No Doctor found with that ID." });
         }
 
-        //[HttpPost("PostDoctor")]
-        //public async Task<IActionResult> PostDoctor([FromForm] CreateDoctorDto createDoctorDto)
-        //{
-        //    await _doctorService.AddDoctorAsync(createDoctorDto);
-        //    return Ok(new { message = "Successfully added doctor" });
-
-
-        //}
+        [HttpPost("PostDoctor")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PostDoctor([FromForm] CreateDoctorDto createDoctorDto)
+        {
+            await _doctorService.AddDoctorAsync(createDoctorDto);
+            return Ok(new { message = "Successfully added doctor" });
+        }
 
         [HttpPut("PutDoctor/{id}")]
         [Authorize(Roles = "Doctor,Admin")]
@@ -78,30 +77,47 @@ namespace Clinic_Complex_Management_System.Controllers
 
         [HttpDelete("DeleteDoctor/{id}")]
         [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> DeleteDoctor(int id)
         {
-
             var doctor = await _doctorService.GetDoctorByIdAsync(id);
             if (doctor == null)
                 return NotFound(new { message = "No doctor found matching this ID." });
+
             try
             {
-                var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "doctor", doctor.Image);
-                if (System.IO.File.Exists(oldFilePath))
-                {
-                    System.IO.File.Delete(oldFilePath);
-                }
+                // Declare the variable before the if block
+                string? oldFilePath = null;
 
+                if (!string.IsNullOrEmpty(doctor.Image))
+                {
+                    oldFilePath = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot",
+                        "images",
+                        "doctor",
+                        doctor.Image
+                    );
+
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
 
                 await _doctorService.DeleteDoctorAsync(id);
 
                 return Ok(new { message = "Successfully deleted doctor" });
-
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "An error occurred while deleting doctor from database.", details = ex.Message });
+                return StatusCode(500, new
+                {
+                    error = "An error occurred while deleting doctor from database.",
+                    details = ex.Message
+                });
             }
         }
+
     }
 }

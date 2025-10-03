@@ -66,10 +66,16 @@ export default function Patients() {
               <td>{p.phone}</td>
               <td>
                 <button
-                  className="btn btn-sm btn-danger"
+                  className="btn btn-sm btn-danger me-1"
                   onClick={() => handleDelete(p.id)}
                 >
                   Delete
+                </button>
+                <button
+                  className="btn btn-sm btn-warning"
+                  onClick={() => navigate(`/dashboard/patient/${p.id}`)}
+                >
+                  Edit
                 </button>
               </td>
             </tr>

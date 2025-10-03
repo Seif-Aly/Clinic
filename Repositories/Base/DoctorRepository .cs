@@ -25,7 +25,7 @@ namespace Clinic_Complex_Management_System1.Repositories.Base
             if (!string.IsNullOrWhiteSpace(specialization))
                 query = query.Where(d => d.Specialization.Contains(specialization));
 
-            return await query.Skip((page - 1) * 6).Take(6).ToListAsync();
+            return await query.OrderByDescending(x => x.Id).ToListAsync();
         }
 
         public async Task<int> GetTotalDoctorsCountAsync(string? name, string? clinic, string? specialization)

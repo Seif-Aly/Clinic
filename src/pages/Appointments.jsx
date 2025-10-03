@@ -54,11 +54,13 @@ export default function Appointments() {
           </thead>
           <tbody>
             {appointments.map((a) => (
-              <tr key={a.id}>
+              <tr key={a.id || a.appointmentId}>
                 <td>{a.patient?.fullName || a.patientName}</td>
                 <td>{a.doctor?.fullName || a.doctorName}</td>
                 <td>
-                  {a.date ? new Date(a.date).toLocaleString() : a.dateTime}
+                  {new Date(
+                    a.appointmentDateTime || a.dateTime || a.date
+                  ).toLocaleString()}
                 </td>
                 <td>{a.status}</td>
                 <td>

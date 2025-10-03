@@ -47,7 +47,7 @@ export default function Clinics() {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Address</th>
+            <th>Specialization</th>
             <th>Hospital</th>
             <th>Operations</th>
           </tr>
@@ -56,7 +56,7 @@ export default function Clinics() {
           {clinics.map((c) => (
             <tr key={c.id}>
               <td>{c.name}</td>
-              <td>{c.address}</td>
+              <td>{c.specialization}</td>
               <td>{c.hospitalName}</td>
               <td>
                 <Link

@@ -30,7 +30,7 @@ export default function AddAdmin() {
         role: "Admin",
         email: email.trim().toLowerCase(),
       };
-      const res = await api.post("/Auth/register", payload);
+      const res = await api.post("/Auth/register-admin", payload);
 
       const token = res?.data?.token;
       if (token) localStorage.setItem("token", token);

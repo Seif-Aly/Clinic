@@ -25,12 +25,12 @@ export default function AppointmentsAdvanced() {
   useEffect(() => {
     // load doctors & patients for filters
     api
-      .get("/doctors")
-      .then((r) => setDoctors(r.data || []))
+      .get("/doctors/GetDoctors")
+      .then((r) => setDoctors(r.data.doctors || []))
       .catch(() => {});
     api
-      .get("/patients")
-      .then((r) => setPatients(r.data || []))
+      .get("/patients/GetPatients")
+      .then((r) => setPatients(r.data.patients || []))
       .catch(() => {});
   }, []);
 
@@ -39,29 +39,27 @@ export default function AppointmentsAdvanced() {
       setErrors([]);
       setLoading(true);
       try {
-        const params = {
-          page,
-          pageSize,
-          doctorId: filters.doctorId || undefined,
-          patientId: filters.patientId || undefined,
-          status: filters.status || undefined,
-          fromDate: filters.fromDate || undefined,
-          toDate: filters.toDate || undefined,
-        };
-        const res = await api.get("/appointments", { params });
-        if (res.data?.items) {
-          setAppointments(res.data.items);
-          setTotal(
-            res.data.total ?? res.data.count ?? res.data.totalCount ?? 0
-          );
-        } else if (Array.isArray(res.data)) {
-          const all = res.data;
-          setTotal(all.length);
-          setAppointments(all.slice((page - 1) * pageSize, page * pageSize));
-        } else {
-          setAppointments([]);
-          setTotal(0);
-        }
+        const res = await api.get("/appointments/GetAppointments", {
+          params: {
+            page,
+            pageSize,
+            nameDoctor: filters.doctorId
+              ? doctors.find((d) => d.id === parseInt(filters.doctorId))
+                  ?.fullName
+              : undefined,
+            namePatient: filters.patientId
+              ? patients.find((p) => p.id === parseInt(filters.patientId))
+                  ?.fullName
+              : undefined,
+            status: filters.status || undefined,
+            fromDate: filters.fromDate || undefined,
+            toDate: filters.toDate || undefined,
+          },
+        });
+
+        const appointmentsList = res.data?.returne?.appointmant || [];
+        setAppointments(appointmentsList);
+        setTotal(appointmentsList.length);
       } catch (err) {
         setErrors(extractErrorMessages(err));
       } finally {
@@ -146,7 +144,7 @@ export default function AppointmentsAdvanced() {
               <option value="Pending">Pending</option>
               <option value="Confirmed">Confirmed</option>
               <option value="Cancelled">Cancelled</option>
-              <option value="Done">Done</option>
+              <option value="Completed">Completed</option>
             </select>
           </div>
 
@@ -198,7 +196,9 @@ export default function AppointmentsAdvanced() {
                   <td>{a.patient?.fullName || a.patientName}</td>
                   <td>{a.doctor?.fullName || a.doctorName}</td>
                   <td>
-                    {a.date ? new Date(a.date).toLocaleString() : a.dateTime}
+                    {new Date(
+                      a.appointmentDateTime || a.dateTime || a.date
+                    ).toLocaleString()}
                   </td>
                   <td>{a.status}</td>
                   <td>

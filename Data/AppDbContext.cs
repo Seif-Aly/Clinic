@@ -18,12 +18,12 @@ namespace Clinic_Complex_Management_System.Data
         public DbSet<Prescription> Prescriptions { get; set; }
         public DbSet<PrescriptionItem> PrescriptionItems { get; set; }
         public DbSet<Profileuser> profileusers { get; set; }
-       
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-         
+
 
             modelBuilder.Entity<Hospital>()
                 .HasMany(h => h.Clinics)
@@ -110,6 +110,21 @@ namespace Clinic_Complex_Management_System.Data
               .HasOne<Profileuser>()
               .WithOne(p => p.User)
              .HasForeignKey<Profileuser>(p => p.UserId);
+             
+             // Doctor <-> User
+            modelBuilder.Entity<Doctor>()
+                .HasOne(d => d.User)
+                .WithMany() // a User can be linked to many Doctors if needed, usually 1:1
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Patient <-> User
+            modelBuilder.Entity<Patient>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
         }
     }
 }

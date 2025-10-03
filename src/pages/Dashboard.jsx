@@ -17,10 +17,10 @@ export default function Dashboard() {
     const load = async () => {
       setErrors([]);
       try {
-        const [dRes, pRes, hRes] = await Promise.all([
+        const [dRes, pRes, aRes, hRes] = await Promise.all([
           api.get("/doctors/Getdoctors"),
           api.get("/patients/GetPatients"),
-          // api.get("/appointments/GetAppointments"),
+          api.get("/appointments/GetAppointments"),
           api.get("/hospitals/GetHospitals"),
         ]);
 
@@ -37,6 +37,9 @@ export default function Dashboard() {
             if ("appointments" in data) return getCount(data.appointments);
             if ("hospitals" in data) return getCount(data.hospitals);
 
+            if ("returne" in data && Array.isArray(data.returne.appointmant))
+              return data.returne.appointmant.length;
+
             if ("returns" in data) return getCount(data.returns);
           }
 
@@ -46,23 +49,21 @@ export default function Dashboard() {
         setStats({
           doctors: getCount(dRes.data),
           patients: getCount(pRes.data),
-          // appointments: getCount(aRes.data),
+          appointments: getCount(aRes.data),
           hospitals: getCount(hRes.data),
         });
 
-        console.log("Doctors data:", dRes.data);
-        console.log("Patients data:", pRes.data);
-        // console.log("Appointments data:", aRes.data);
-        console.log("Hospitals data:", hRes.data);
+        const appsRaw =
+          aRes.data?.returne?.appointmant ||
+          aRes.data?.returne?.appointments ||
+          [];
 
-        // const apps = Array.isArray(aRes.data)
-        //   ? aRes.data.slice(-5).reverse()
-        //   : [];
-        const pats = Array.isArray(pRes.data)
-          ? pRes.data.slice(-5).reverse()
-          : [];
+        const patsRaw = pRes.data?.returns?.patients || [];
 
-        // setLatestAppointments(apps);
+        const apps = Array.isArray(appsRaw) ? appsRaw.slice(-5).reverse() : [];
+        const pats = Array.isArray(patsRaw) ? patsRaw.slice(-5).reverse() : [];
+
+        setLatestAppointments(apps);
         setLatestPatients(pats);
       } catch (err) {
         setErrors(extractErrorMessages(err));
@@ -93,8 +94,7 @@ export default function Dashboard() {
         <div className="col-md-3">
           <div className="card p-3 text-center card-small bg-warning text-white">
             <div>Appointments</div>
-            <h3>0</h3>
-            {/* <h3>{stats.appointments}</h3> */}
+            <h3>{stats.appointments}</h3>
           </div>
         </div>
         <div className="col-md-3">
@@ -122,7 +122,9 @@ export default function Dashboard() {
                   <td>{a.patient?.fullName || a.patientName || a.patient}</td>
                   <td>{a.doctor?.fullName || a.doctorName || a.doctor}</td>
                   <td>
-                    {a.date ? new Date(a.date).toLocaleString() : a.dateTime}
+                    {new Date(
+                      a.appointmentDateTime || a.dateTime || a.date
+                    ).toLocaleString()}
                   </td>
                 </tr>
               ))}

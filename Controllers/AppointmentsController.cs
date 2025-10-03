@@ -84,7 +84,7 @@ namespace Clinic_Complex_Management_System1.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateAppointment([FromForm] CreateAppointmentDto dto)
+        public async Task<IActionResult> CreateAppointment([FromBody] CreateAppointmentDto dto)
         {
             try
             {

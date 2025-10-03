@@ -11,6 +11,7 @@
         public DateTime DateOfBirth { get; set; }
         public Guid? UserId { get; set; }
         public ICollection<Appointment>? Appointments { get; set; }
+        public User? User { get; set; }
     }
 
 }

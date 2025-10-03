@@ -11,15 +11,15 @@ export const getPatientById = async (id) => {
 };
 
 export const createPatient = async (formData) => {
-  const res = await api.post("/Patients", formData);
+  const res = await api.post("/Patients/Postpatient", formData);
   return res.data;
 };
 
 export const updatePatient = async (id, formData) => {
-  const res = await api.put(`/Patients/${id}`, formData);
+  const res = await api.put(`/Patients/PutPatient/${id}`, formData);
   return res.data;
 };
 
 export const deletePatient = async (id) => {
-  await api.delete(`/Patients/${id}`);
+  await api.delete(`/Patients/DeletePatient/${id}`);
 };

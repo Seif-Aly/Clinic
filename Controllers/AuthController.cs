@@ -11,6 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+
 
 
 [ApiController]
@@ -163,7 +165,7 @@ public class AuthController : ControllerBase
         };
         return Ok(patientResult);
     }
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     [HttpPost("register-admin")]
     public async Task<IActionResult> RegisterAdmin([FromBody] LoginDto dto)
     {
@@ -366,4 +368,52 @@ public class AuthController : ControllerBase
         public string? Email { get; set; }
         public string? Password { get; set; }
     }
+
+    public async Task LinkExistingDoctorsAndPatients()
+{
+    var doctors = await _context.Doctors.Where(d => d.UserId == null).ToListAsync();
+    foreach (var d in doctors)
+    {
+        if (!string.IsNullOrEmpty(d.Email))
+        {
+            var user = new User
+            {
+                UserName = d.Email,
+                Email = d.Email,
+                EmailConfirmed = true
+            };
+
+            var result = await _userManager.CreateAsync(user, "DefaultPassword123!");
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, "Doctor");
+                d.UserId = user.Id;
+            }
+        }
+    }
+
+    var patients = await _context.Patients.Where(p => p.UserId == null).ToListAsync();
+    foreach (var p in patients)
+    {
+        if (!string.IsNullOrEmpty(p.Email))
+        {
+            var user = new User
+            {
+                UserName = p.Email,
+                Email = p.Email,
+                EmailConfirmed = true
+            };
+
+            var result = await _userManager.CreateAsync(user, "DefaultPassword123!");
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, "Patient");
+                p.UserId = user.Id;
+            }
+        }
+    }
+
+    await _context.SaveChangesAsync();
+}
+
 }

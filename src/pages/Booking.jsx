@@ -29,12 +29,22 @@ export default function Booking() {
   const [time, setTime] = useState("");
 
   const token = localStorage.getItem("token");
-  const decoded = jwtDecode(token);
-  const rawRoles =
-    decoded.role ??
-    decoded.roles ??
-    decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-  const roles = Array.isArray(rawRoles) ? rawRoles : rawRoles ? [rawRoles] : [];
+  let decoded = null;
+  let roles = [];
+
+  if (token) {
+    try {
+      decoded = jwtDecode(token);
+      const rawRoles =
+        decoded.role ??
+        decoded.roles ??
+        decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      roles = Array.isArray(rawRoles) ? rawRoles : rawRoles ? [rawRoles] : [];
+    } catch (err) {
+      console.error("Failed to decode token:", err);
+      localStorage.removeItem("token");
+    }
+  }
 
   const isLoggedIn = Boolean(token);
   const isPatient = roles.includes("Patient");
@@ -53,8 +63,29 @@ export default function Booking() {
   }, [id]);
 
   const createPatientIfNeeded = async () => {
+    // If already linked
     if (patientId) return patientId;
 
+    try {
+      // Ask backend: do you have a Patient profile linked to this Identity user?
+      const res = await api.get("/patients/GetMyProfile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const existing = res.data;
+      if (existing?.id || existing?.patientId) {
+        const pid = existing.id || existing.patientId;
+        localStorage.setItem("patientId", pid);
+        setPatientId(pid);
+        return pid;
+      }
+    } catch (err) {
+      console.warn("No existing profile found, will create new one.");
+    }
+
+    // Still no patient — create one
     const payload = {
       fullName: patientModel.fullName,
       nationalId: patientModel.nationalId,
@@ -63,9 +94,11 @@ export default function Booking() {
       gender: patientModel.gender,
       dateOfBirth: patientModel.dateOfBirth || new Date().toISOString(),
     };
+
     const r = await api.post("/patients", payload);
     const created = r.data;
     const newId = created?.id || created?.patientId || created?.PatientId;
+
     if (!newId) throw ["Could not determine patient id after creation."];
     localStorage.setItem("patientId", newId);
     setPatientId(newId);
@@ -99,6 +132,7 @@ export default function Booking() {
         doctorId: Number(id),
         patientId: Number(pid),
       };
+      console.log("Booking Payload", payload);
       await api.post("/appointments", payload, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -133,7 +167,7 @@ export default function Booking() {
         {!isLoggedIn && (
           <div className="alert alert-warning">
             You must be logged in as a patient to book.{" "}
-            <Link to="/login">Login</Link> or{" "}
+            <Link to="/patient-login">Login</Link> or{" "}
             <Link to="/register">Register</Link>.
           </div>
         )}

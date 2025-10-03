@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
 public class HospitalsController : ControllerBase
 {
     private readonly IHospitalService _hospitalService;
@@ -35,7 +34,7 @@ public class HospitalsController : ControllerBase
 
             var pagination = new
             {
-                TotalNumberOfPages = Math.Ceiling(result.TotalCount / (double)PageSize),
+                TotalNumberOfPages = Math.Ceiling(result.TotalCount / 20.0),
                 CurrentPage = page
             };
             var returns = new

@@ -11,7 +11,7 @@ export default function PrescriptionsList() {
     const load = async () => {
       setErrors([]);
       try {
-        const r = await api.get("/prescriptions");
+        const r = await api.get("/Prescriptions/GetAllPrescriptions");
         setPrescriptions(r.data || []);
       } catch (err) {
         setErrors(extractErrorMessages(err));

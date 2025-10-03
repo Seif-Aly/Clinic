@@ -35,24 +35,28 @@ export default function Home() {
     [doctors, hospitals, clinics]
   );
 
-  const mapDoctors = (d) =>
-    d?.doctors ||
-    d?.Returns?.doctor ||
-    d?.Return?.doctor ||
-    (Array.isArray(d) ? d : []) ||
-    [];
+  const mapDoctors = (d) => {
+    if (Array.isArray(d)) return d;
+    if (Array.isArray(d?.doctors)) return d.doctors;
+    if (Array.isArray(d?.Returns?.doctor)) return d.Returns.doctor;
+    if (Array.isArray(d?.returns?.doctor)) return d.returns.doctor;
+    if (Array.isArray(d?.Return?.doctor)) return d.Return.doctor;
+    return [];
+  };
 
-  const mapHospitals = (d) =>
-    d?.returns?.hospitals ||
-    d?.Returns?.hospitals ||
-    (Array.isArray(d) ? d : []) ||
-    [];
+  const mapHospitals = (d) => {
+    if (Array.isArray(d)) return d;
+    if (Array.isArray(d?.returns?.hospitals)) return d.returns.hospitals;
+    if (Array.isArray(d?.Returns?.hospitals)) return d.Returns.hospitals;
+    return [];
+  };
 
-  const mapClinics = (d) =>
-    d?.returns?.clinic ||
-    d?.Returns?.clinic ||
-    (Array.isArray(d) ? d : []) ||
-    [];
+  const mapClinics = (d) => {
+    if (Array.isArray(d)) return d;
+    if (Array.isArray(d?.returns?.clinic)) return d.returns.clinic;
+    if (Array.isArray(d?.Returns?.clinic)) return d.Returns.clinic;
+    return [];
+  };
 
   const loadAll = async () => {
     setErrors([]);
@@ -60,10 +64,10 @@ export default function Home() {
     try {
       const dRes = await api.get("/doctors/GetDoctors", {
         params: {
-          NameDoctor: filters.q || undefined,
-          Specialization: filters.specialization || undefined,
-          HospitalId: filters.hospitalId || undefined,
-          ClinicId: filters.clinicId || undefined,
+          nameDoctor: filters.q || undefined,
+          specialization: filters.specialization || undefined,
+          hospitalId: filters.hospitalId || undefined,
+          clinicId: filters.clinicId || undefined,
         },
       });
       setDoctors(mapDoctors(dRes.data));
@@ -82,7 +86,7 @@ export default function Home() {
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [filters]);
 
   useEffect(() => {
     if (
@@ -100,7 +104,7 @@ export default function Home() {
 
   const clearFilters = async () => {
     setFilters({ q: "", specialization: "", hospitalId: "", clinicId: "" });
-    await loadAll();
+    // await loadAll();
   };
 
   const SkeletonCard = () => (

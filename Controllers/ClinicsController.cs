@@ -30,7 +30,7 @@ namespace Clinic_Complex_Management_System.Controllers
 
                 var pagination = new
                 {
-                    TotalNumberOfPages = Math.Ceiling(result.TotalCount / 6.0),
+                    TotalNumberOfPages = Math.Ceiling(result.TotalCount / 20.0),
                     CurrentPage = page
                 };
 
